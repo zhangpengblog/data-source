@@ -1,0 +1,17 @@
+{
+  "updated_at": "2026-09-16 11:22:20",
+  "total_mv": 93804.62,
+  "total_cost": 92298.43,
+  "total_profit": 1506.19,
+  "total_ret_pct": 1.63,
+  "pending_cost": [],
+  "pending_cost_mv": 0,
+  "total_day_pnl": -355.49,
+  "total_day_pct": -0.38,
+  "alloc": {
+    "基金": 42326.62,
+    "股票": 38518.0,
+    "ETF": 12960.0
+  },
+  "warnings": []
+}
