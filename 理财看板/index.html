@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<title>投资理财看板</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+/* ============================================================
+   Apple Fluid Interface — 设计令牌
+   字号/字距/行高遵循 Apple HIG 光学排版；圆角遵循连续曲率观感
+   ============================================================ */
+:root{
+  /* 语义色 — Apple System Colors */
+  --blue:#007aff; --green:#34c759; --red:#ff3b30; --orange:#ff9500;
+  --purple:#af52de; --pink:#ff2d55; --teal:#5ac8fa; --indigo:#5856d6;
+  --gray:#8e8e93; --gray2:#aeaeb2; --gray3:#c7c7cc;
+  --gray4:#d1d1d6; --gray5:#e5e5ea; --gray6:#f2f2f7;
+
+  /* 层级材质（低层 → 高层，透光递减） */
+  --mat-bg:rgba(255,255,255,.72);
+  --mat-card:rgba(255,255,255,.78);
+  --mat-raised:rgba(255,255,255,.86);
+  --mat-border:rgba(60,60,67,.10);
+  --mat-border-strong:rgba(60,60,67,.16);
+  --sep:rgba(60,60,67,.13);
+
+  --label:#000; --label-2:rgba(60,60,67,.72); --label-3:rgba(60,60,67,.42);
+
+  /* 弹簧物理参数（WWDC）：无手势用临界阻尼，手势带动量用欠阻尼 */
+  --damping-default:1.0; --response-default:.4s;
+  --damping-gesture:.8;  --response-gesture:.3s;
+
+  --radius-card:20px; --radius-ctl:12px; --radius-pill:980px;
+  --shadow-1:0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.05);
+  --shadow-2:0 2px 8px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.10);
+  --shadow-3:0 -4px 22px rgba(0,0,0,.10);
+  --up:var(--red); --down:var(--green);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --mat-bg:rgba(28,28,30,.72);
+    --mat-card:rgba(28,28,30,.76);
+    --mat-raised:rgba(44,44,46,.86);
+    --mat-border:rgba(255,255,255,.10);
+    --mat-border-strong:rgba(255,255,255,.16);
+    --sep:rgba(84,84,88,.55);
+    --label:#fff; --label-2:rgba(235,235,245,.62); --label-3:rgba(235,235,245,.32);
+    --gray6:#1c1c1e;
+    --shadow-1:0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.28);
+    --shadow-2:0 2px 10px rgba(0,0,0,.36), 0 14px 38px rgba(0,0,0,.42);
+    --shadow-3:0 -4px 26px rgba(0,0,0,.5);
+  }
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale}
+body{
+  /* 光学字号：正文 17pt 观感，字距 -0.41pt 对齐 SF 光学补偿 */
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",
+    "PingFang SC","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:17px;line-height:1.47;letter-spacing:-.022em;
+  color:var(--label);min-height:100vh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background:
+    radial-gradient(120% 90% at 8% 0%, rgba(0,122,255,.16), transparent 58%),
+    radial-gradient(110% 85% at 96% 4%, rgba(175,82,222,.14), transparent 56%),
+    radial-gradient(120% 100% at 50% 100%, rgba(52,199,89,.10), transparent 62%),
+    var(--gray6);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+/* 毛玻璃需要背后有内容才可见，这里再加一层极浅噪点避免色带 */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(0,0,0,.014) 1px, transparent 1px);
+  background-size:3px 3px;opacity:.7}
+
+.shell{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+
+/* ================= 顶栏：毛玻璃 + 逐层吸附 ================= */
+.topbar{
+  position:sticky;top:0;z-index:60;margin:0 -20px 20px;
+  padding:12px 20px;
+  background:var(--mat-bg);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
+  backdrop-filter:saturate(180%) blur(24px);
+  border-bottom:.5px solid var(--mat-border);
+}
+.topbar-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-mark{width:34px;height:34px;border-radius:9px;flex:none;
+  background:linear-gradient(150deg,#007aff,#5856d6 55%,#af52de);
+  box-shadow:0 2px 10px rgba(0,122,255,.34);
+  display:grid;place-items:center;color:#fff;font-size:17px;font-weight:600}
+.brand h1{font-size:20px;font-weight:700;letter-spacing:-.021em;white-space:nowrap}
+.brand p{font-size:12px;color:var(--label-2);letter-spacing:-.01em}
+.stamp{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--label-2);
+  padding:7px 13px;border-radius:var(--radius-pill);
+  background:var(--mat-raised);border:.5px solid var(--mat-border);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.stamp .dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 0 3px rgba(52,199,89,.2);flex:none}
+/* 数据超过 20 小时未刷新：整体转为橙色告警态 */
+.stamp.stale{color:#c93400}
+.stamp.stale .dot{background:#ff9f0a;box-shadow:0 0 0 3px rgba(255,159,10,.22)}
+@media (max-width:560px){.stamp{white-space:normal;text-align:right}}
+
+/* ================= 分段控件（iOS Segmented Control + 滑块） ================= */
+.seg{position:relative;display:flex;gap:2px;padding:2px;margin-bottom:22px;
+  background:rgba(118,118,128,.12);border-radius:11px;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.seg::-webkit-scrollbar{display:none}
+.seg .thumb{position:absolute;top:2px;bottom:2px;border-radius:9px;
+  background:var(--mat-raised);box-shadow:0 1px 3px rgba(0,0,0,.10),0 1px 1px rgba(0,0,0,.04);
+  transition:transform var(--response-gesture) cubic-bezier(.32,.72,0,1),width var(--response-gesture) cubic-bezier(.32,.72,0,1);
+  pointer-events:none;z-index:0}
+@media (prefers-color-scheme:dark){.seg .thumb{background:rgba(99,99,102,.9)}}
+.seg button{position:relative;z-index:1;flex:1 1 0;min-width:96px;
+  padding:8px 14px;border:0;background:transparent;cursor:pointer;
+  font:inherit;font-size:13.5px;font-weight:500;letter-spacing:-.01em;
+  color:var(--label-2);border-radius:9px;white-space:nowrap;
+  transition:color .22s ease,transform .16s cubic-bezier(.32,.72,0,1)}
+@media (max-width:560px){
+  .shell{padding:16px 14px 56px}
+  .topbar{margin:0 -14px 16px;padding:10px 14px}
+  .brand h1{font-size:17px}
+  .brand p{font-size:11px}
+  .seg button{min-width:0;font-size:12.5px;padding:8px 9px}
+  .seg button .k{margin-right:4px;font-size:10px}
+  .kpi{font-size:29px}
+  .kpi.sm{font-size:21px}
+  .card{padding:16px}
+  .pos{padding:16px}
+  .pos-title{font-size:17px}
+  .chart{height:260px}.chart.sm{height:220px}
+  .grid[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+  /* 窄屏：跨 2 列的卡片降为通栏单列，避免溢出 */
+  .grid.g4 > .span2{grid-column:auto!important}
+  .fab{right:14px;bottom:16px;padding:12px 17px;font-size:14px}
+}
+.seg button.on{color:var(--label);font-weight:600}
+/* 按下即反馈：不做 hover 位移，只在按下瞬间缩放，尊重直接操纵 */
+.seg button:active{transform:scale(.96)}
+.seg button .k{display:inline-block;font-size:11px;font-weight:700;
+  color:var(--label-3);margin-right:6px;letter-spacing:0}
+.seg button.on .k{color:var(--blue)}
+
+/* ================= 卡片：材质 + 层级 + 入场 ================= */
+.page{display:none}
+.page.on{display:block}
+.page.on > *{animation:rise .5s cubic-bezier(.32,.72,0,1) both}
+.page.on > *:nth-child(2){animation-delay:.04s}
+.page.on > *:nth-child(3){animation-delay:.08s}
+.page.on > *:nth-child(4){animation-delay:.12s}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.985)}
+  to{opacity:1;transform:none}}
+
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(216px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(390px,1fr))}
+
+.card{
+  background:var(--mat-card);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
+  backdrop-filter:saturate(180%) blur(24px);
+  border:.5px solid var(--mat-border);
+  border-radius:var(--radius-card);
+  padding:18px 20px;
+  box-shadow:var(--shadow-1);
+  transition:transform .34s cubic-bezier(.32,.72,0,1),box-shadow .34s cubic-bezier(.32,.72,0,1);
+}
+@media (hover:hover){.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-2)}}
+.card h3{font-size:13px;font-weight:590;letter-spacing:.006em;color:var(--label-2);
+  margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card h3 .tag{font-size:11px;font-weight:500;color:var(--label-3)}
+
+.kpi{font-size:34px;font-weight:680;letter-spacing:-.026em;line-height:1.12;
+  font-variant-numeric:tabular-nums}
+.kpi.sm{font-size:24px;letter-spacing:-.022em}
+.sub{font-size:12.5px;color:var(--label-2);margin-top:6px;letter-spacing:-.006em}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--gray)}
+.na{color:var(--label-3);font-style:normal;font-size:12px}
+
+/* ================= 表格：Apple 列表样式 ================= */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;
+  margin:0 -20px -18px;padding:0 20px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:right;font-size:11.5px;font-weight:510;color:var(--label-3);
+  letter-spacing:.03em;padding:0 10px 9px;white-space:nowrap;
+  border-bottom:.5px solid var(--sep);text-transform:uppercase}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+td{padding:12px 10px;text-align:right;border-bottom:.5px solid var(--sep);
+  font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.01em}
+tbody tr:last-child td{border-bottom:0}
+tbody tr{transition:background .18s ease}
+@media (hover:hover){tbody tr:hover{background:rgba(120,120,128,.07)}}
+
+.badge{display:inline-block;padding:2px 9px;border-radius:var(--radius-pill);
+  font-size:11.5px;font-weight:560;letter-spacing:-.005em}
+.badge.f{background:rgba(175,82,222,.14);color:var(--purple)}
+.badge.s{background:rgba(255,149,0,.15);color:#c93400}
+.badge.e{background:rgba(0,122,255,.14);color:var(--blue)}
+@media (prefers-color-scheme:dark){
+  .badge.s{color:var(--orange)}
+}
+
+.chart{width:100%;height:320px}
+.chart.sm{height:250px}
+
+/* ================= 说明条：vibrancy ================= */
+.note{font-size:13px;line-height:1.6;color:var(--label-2);letter-spacing:-.008em;
+  padding:13px 16px;margin-top:16px;border-radius:14px;
+  background:rgba(0,122,255,.08);border:.5px solid rgba(0,122,255,.16)}
+.note.warn{background:rgba(255,149,0,.09);border-color:rgba(255,149,0,.2)}
+.note b{color:var(--label);font-weight:590}
+.note code{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px;
+  background:rgba(120,120,128,.14);padding:1px 6px;border-radius:5px}
+
+/* ================= 持仓卡：sheet 观感 + 出入场对称 ================= */
+.pos{background:var(--mat-card);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);
+  backdrop-filter:saturate(180%) blur(24px);
+  border:.5px solid var(--mat-border);border-radius:var(--radius-card);
+  padding:20px;margin-bottom:16px;box-shadow:var(--shadow-1);
+  transition:box-shadow .34s cubic-bezier(.32,.72,0,1)}
+@media (hover:hover){.pos:hover{box-shadow:var(--shadow-2)}}
+.pos-head{display:flex;justify-content:space-between;align-items:flex-start;
+  gap:14px;flex-wrap:wrap;padding-bottom:15px;margin-bottom:15px;
+  border-bottom:.5px solid var(--sep)}
+.pos-title{font-size:19px;font-weight:660;letter-spacing:-.021em;
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pos-title em{font-style:normal;font-size:12.5px;font-weight:450;
+  color:var(--label-3);letter-spacing:0;font-variant-numeric:tabular-nums}
+/* auto-fit 在窄列会把最后一格孤零零甩到下一行；改用 auto-fill + 固定 5 列，
+   10 个指标恰好 5×2 排满，不留空洞（窄屏自动降为 2 列） */
+.mini{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+@media (max-width:900px){.mini{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:560px){.mini{grid-template-columns:repeat(2,1fr)}}
+.mini > div{background:rgba(120,120,128,.09);padding:10px 12px;border-radius:12px;
+  border:.5px solid transparent;transition:background .2s ease}
+.mini label{display:block;font-size:11px;font-weight:500;color:var(--label-3);
+  letter-spacing:.006em;margin-bottom:3px}
+.mini b{font-size:15px;font-weight:620;letter-spacing:-.014em;
+  font-variant-numeric:tabular-nums}
+.mini b.na{font-size:12px;font-weight:400}
+
+/* 场外基金 · 分红面板 */
+.div-panel{margin-top:14px;border-radius:14px;overflow:hidden;
+  background:linear-gradient(135deg,rgba(255,159,10,.10),rgba(255,214,10,.05) 60%,rgba(120,120,128,.05));
+  border:.5px solid rgba(255,159,10,.22)}
+.div-head{display:flex;align-items:center;gap:8px;padding:11px 14px;
+  border-bottom:.5px solid rgba(255,159,10,.18)}
+.div-head .dot{width:7px;height:7px;border-radius:50%;background:#ff9f0a;
+  box-shadow:0 0 0 3px rgba(255,159,10,.18);flex:none}
+.div-head h4{font-size:13px;font-weight:600;letter-spacing:-.006em;color:var(--label);margin:0}
+.div-head .mode{margin-left:auto;font-size:11px;font-weight:600;color:#c77800;
+  background:rgba(255,159,10,.16);padding:3px 9px;border-radius:20px;white-space:nowrap}
+@media (prefers-color-scheme:dark){
+  .div-head .mode{color:#ffb340;background:rgba(255,159,10,.22)}
+}
+.div-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:1px;
+  background:rgba(255,159,10,.14)}
+.div-kpis > div{background:var(--card,#fff);padding:11px 14px}
+@media (prefers-color-scheme:dark){
+  .div-kpis > div{background:#1c1c1e}
+}
+.div-kpis label{display:block;font-size:11px;font-weight:500;color:var(--label-3);
+  letter-spacing:.006em;margin-bottom:4px;white-space:nowrap}
+.div-kpis b{font-size:16px;font-weight:640;letter-spacing:-.018em;
+  font-variant-numeric:tabular-nums;color:var(--label)}
+.div-kpis b.hl{color:#c77800}
+@media (prefers-color-scheme:dark){
+  .div-kpis b.hl{color:#ffb340}
+}
+.div-kpis .u{font-size:11px;font-weight:500;color:var(--label-3);margin-left:2px}
+
+/* 年度分红推演：30 行紧凑表格（表格默认 padding 12px 太高，30 行会拖得很长） */
+.div-proj .sc{max-height:340px;overflow-y:auto;padding:0 14px 8px;
+  -webkit-overflow-scrolling:touch}
+.div-proj table{font-size:12.5px}
+.div-proj th{padding:0 9px 7px;font-size:11px}
+.div-proj td{padding:7px 9px;border-bottom:.5px solid rgba(120,120,128,.10)}
+.div-proj tbody tr:last-child td{border-bottom:0}
+.div-proj .lead{padding:12px 14px 2px;font-size:12.5px;color:var(--label-2);line-height:1.65}
+/* .more 原本只在 .div-list .more 里定义过，不在那个容器内就用不上样式、
+   会继承正文字号（17px）显得很大 —— 这里显式给推演面板的脚注定小号 */
+.div-proj .more{padding:10px 14px 12px;font-size:11px;line-height:1.62;color:var(--label-3)}
+.div-list{padding:4px 0 2px}
+.div-list .row{display:grid;grid-template-columns:86px 1fr auto;gap:10px;
+  align-items:center;padding:7px 14px;font-size:12px;
+  border-top:.5px solid rgba(120,120,128,.10)}
+.div-list .row:first-child{border-top:none}
+.div-list .row .d{color:var(--label-2);font-variant-numeric:tabular-nums}
+.div-list .row .t{color:var(--label-3);font-size:11px}
+.div-list .row .s{font-weight:620;color:var(--label);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.div-list .more{padding:7px 14px 9px;font-size:11px;color:var(--label-3)}
+
+/* ================= 定投核对提示：待确认份额 ================= */
+.pend{margin-top:12px;border-radius:13px;overflow:hidden;
+  background:linear-gradient(135deg,rgba(0,122,255,.09),rgba(90,200,250,.05) 60%,rgba(120,120,128,.05));
+  border:.5px solid rgba(0,122,255,.22);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+.pend.warn{background:linear-gradient(135deg,rgba(255,159,10,.11),rgba(255,214,10,.05) 60%,rgba(120,120,128,.05));
+  border-color:rgba(255,159,10,.28)}
+.pend-head{display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border-bottom:.5px solid rgba(0,122,255,.16);cursor:pointer;user-select:none}
+.pend.warn .pend-head{border-bottom-color:rgba(255,159,10,.2)}
+.pend-head .dot{width:7px;height:7px;border-radius:50%;background:#007aff;
+  box-shadow:0 0 0 3px rgba(0,122,255,.16);flex:none}
+.pend.warn .pend-head .dot{background:#ff9f0a;box-shadow:0 0 0 3px rgba(255,159,10,.18)}
+.pend-head h4{font-size:13px;font-weight:600;letter-spacing:-.006em;color:var(--label);margin:0}
+.pend-head .st{margin-left:auto;font-size:11px;font-weight:600;color:#0a5fbf;
+  background:rgba(0,122,255,.14);padding:3px 9px;border-radius:20px;white-space:nowrap}
+.pend.warn .pend-head .st{color:#c77800;background:rgba(255,159,10,.16)}
+@media (prefers-color-scheme:dark){
+  .pend-head .st{color:#5ab0ff;background:rgba(0,122,255,.24)}
+  .pend.warn .pend-head .st{color:#ffb340;background:rgba(255,159,10,.22)}
+}
+.pend-body{padding:11px 14px 13px}
+.pend-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:1px;
+  background:rgba(0,122,255,.13);border-radius:9px;overflow:hidden}
+.pend.warn .pend-kpis{background:rgba(255,159,10,.14)}
+.pend-kpis > div{background:var(--card,#fff);padding:9px 12px}
+@media (prefers-color-scheme:dark){ .pend-kpis > div{background:#1c1c1e} }
+.pend-kpis label{display:block;font-size:10.5px;font-weight:500;color:var(--label-3);
+  letter-spacing:.006em;margin-bottom:3px;white-space:nowrap}
+.pend-kpis b{font-size:15px;font-weight:640;letter-spacing:-.018em;
+  font-variant-numeric:tabular-nums;color:var(--label)}
+.pend-kpis b.hl{color:#0a5fbf}
+.pend-kpis b.warnc{color:#c77800}
+@media (prefers-color-scheme:dark){
+  .pend-kpis b.hl{color:#5ab0ff}
+  .pend-kpis b.warnc{color:#ffb340}
+}
+.pend-kpis .u{font-size:10.5px;font-weight:500;color:var(--label-3);margin-left:2px}
+.pend-note{margin-top:9px;font-size:11.5px;line-height:1.55;color:var(--label-2);letter-spacing:-.004em}
+.pend-note b{color:var(--label);font-weight:600}
+.pend-note code{font-size:11px;background:rgba(120,120,128,.12);padding:1px 5px;border-radius:4px}
+.pend-hist{margin-top:8px;padding-top:8px;border-top:.5px solid rgba(120,120,128,.14)}
+.pend-hist .r{display:grid;grid-template-columns:74px 1fr auto;gap:9px;align-items:center;
+  font-size:11.5px;padding:3px 0;color:var(--label-2)}
+.pend-hist .r .dt{font-variant-numeric:tabular-nums;color:var(--label-3)}
+.pend-hist .r .sh{font-weight:600;color:var(--label);font-variant-numeric:tabular-nums}
+.pend-hist .r .df{font-variant-numeric:tabular-nums}
+.pend-hist .r .df.ok{color:#30a46c}
+.pend-hist .r .df.bad{color:#ff9f0a}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--label-2);
+  margin-top:12px;justify-content:center}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;
+  margin-right:5px;vertical-align:middle}
+
+/* ================= 底部抽屉：手势驱动 + 橡胶边界 ================= */
+.sheet-mask{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.34);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;transition:opacity .34s cubic-bezier(.32,.72,0,1)}
+.sheet-mask.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:100;
+  max-height:82vh;min-height:120px;overflow:hidden;display:flex;flex-direction:column;
+  background:var(--mat-raised);
+  -webkit-backdrop-filter:saturate(200%) blur(34px);
+  backdrop-filter:saturate(200%) blur(34px);
+  border-radius:22px 22px 0 0;border-top:.5px solid var(--mat-border-strong);
+  box-shadow:0 0 0 .5px rgba(0,0,0,.04), var(--shadow-3);
+  transform:translateY(110vh);              /* 用视口高度兜底，避免内容为空时藏不住 */
+  transition:transform var(--response-gesture) cubic-bezier(.32,.72,0,1);
+  will-change:transform}
+.sheet.on{transform:translateY(0)}
+.sheet.dragging{transition:none}
+.sheet-grip{padding:10px 0 4px;display:grid;place-items:center;cursor:grab;
+  touch-action:none;flex:none}
+.sheet-grip:active{cursor:grabbing}
+.sheet-grip span{width:38px;height:5px;border-radius:3px;
+  background:var(--gray3);display:block}
+@media (prefers-color-scheme:dark){.sheet-grip span{background:#48484a}}
+.sheet-head{padding:6px 22px 14px;display:flex;justify-content:space-between;
+  align-items:center;gap:12px;border-bottom:.5px solid var(--sep);flex:none}
+.sheet-head h2{font-size:19px;font-weight:680;letter-spacing:-.021em}
+.sheet-head .x{width:30px;height:30px;border-radius:50%;border:0;flex:none;
+  background:rgba(120,120,128,.16);color:var(--label-2);cursor:pointer;
+  font-size:15px;line-height:1;display:grid;place-items:center;
+  transition:transform .18s cubic-bezier(.32,.72,0,1),background .18s ease}
+.sheet-head .x:active{transform:scale(.9);background:rgba(120,120,128,.3)}
+.sheet-body{padding:18px 22px 30px;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
+/* 列表项：可点、带 chevron */
+.li{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:14px 0;border-bottom:.5px solid var(--sep);cursor:pointer;
+  transition:background .18s ease,transform .18s cubic-bezier(.32,.72,0,1)}
+.li:last-child{border-bottom:0}
+.li:active{transform:scale(.985)}
+.li-t{font-size:15.5px;font-weight:520;letter-spacing:-.014em}
+.li-s{font-size:12.5px;color:var(--label-2);margin-top:3px}
+.li-v{font-size:15px;font-weight:620;font-variant-numeric:tabular-nums;
+  letter-spacing:-.014em;text-align:right;flex:none}
+.chev{color:var(--label-3);font-size:15px;flex:none;margin-left:-4px}
+
+/* 开关（分红复投等）：iOS Switch，弹簧过渡 */
+.sw{position:relative;width:51px;height:31px;border-radius:var(--radius-pill);
+  border:0;background:rgba(120,120,128,.32);cursor:pointer;flex:none;padding:0;
+  transition:background var(--response-default) cubic-bezier(.32,.72,0,1)}
+.sw.on{background:var(--green)}
+.sw i{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;
+  background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.18),0 0 1px rgba(0,0,0,.1);
+  transition:transform var(--response-gesture) cubic-bezier(.32,.72,0,1)}
+.sw.on i{transform:translateX(20px)}
+
+/* 悬浮主操作按钮 */
+.fab{position:fixed;right:clamp(16px,4vw,34px);bottom:calc(22px + env(safe-area-inset-bottom));
+  z-index:70;display:flex;align-items:center;gap:9px;
+  padding:13px 20px;border:0;border-radius:var(--radius-pill);cursor:pointer;
+  background:linear-gradient(150deg,#007aff,#5856d6);color:#fff;
+  font:inherit;font-size:15px;font-weight:600;letter-spacing:-.014em;
+  box-shadow:0 6px 22px rgba(0,122,255,.36);
+  transition:transform .3s cubic-bezier(.32,.72,0,1),box-shadow .3s ease}
+.fab:active{transform:scale(.94)}
+@media (hover:hover){.fab:hover{transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(0,122,255,.44)}}
+
+footer{margin-top:30px;padding-top:18px;border-top:.5px solid var(--sep);
+  font-size:12px;color:var(--label-3);line-height:1.7;letter-spacing:-.004em}
+footer .ok{color:var(--green);font-weight:520}
+footer .bad{color:var(--orange);font-weight:520}
+
+.loading{padding:60px 20px;text-align:center;color:var(--label-2);font-size:15px}
+.spin{width:26px;height:26px;margin:0 auto 14px;border-radius:50%;
+  border:2.5px solid rgba(120,120,128,.22);border-top-color:var(--blue);
+  animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ================= 无障碍适配 ================= */
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .page.on > *{animation:none}
+}
+@media (prefers-reduced-transparency:reduce){
+  :root{--mat-bg:#fff;--mat-card:#fff;--mat-raised:#fff;--mat-border:rgba(60,60,67,.2)}
+  .card,.pos,.topbar,.sheet{-webkit-backdrop-filter:none;backdrop-filter:none}
+  body{background:var(--gray6)}
+}
+@media (prefers-contrast:more){
+  :root{--label-2:rgba(60,60,67,.86);--label-3:rgba(60,60,67,.6);
+    --mat-border:rgba(60,60,67,.4)}
+  .card,.pos{border-width:1px}
+}
+@media (prefers-color-scheme:dark) and (prefers-reduced-transparency:reduce){
+  :root{--mat-bg:#1c1c1e;--mat-card:#1c1c1e;--mat-raised:#2c2c2e}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <div class="brand-mark">￥</div>
+      <div>
+        <h1>投资理财看板</h1>
+        <p>基金 · 股票 · ETF　每日自动刷新</p>
+      </div>
+    </div>
+    <div class="stamp"><span class="dot"></span><span id="stamp">加载中…</span></div>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="seg" id="seg">
+    <div class="thumb" id="thumb"></div>
+    <button class="on" data-p="ov"><span class="k">A</span>持仓总览</button>
+    <button data-p="fund"><span class="k">B</span>场外基金</button>
+    <button data-p="stock"><span class="k">C</span>股票 / ETF</button>
+    <button data-p="div"><span class="k">D</span>分红汇总</button>
+  </div>
+
+  <div class="loading" id="boot"><div class="spin"></div>正在加载数据…</div>
+
+  <!-- ============ A 持仓总览 ============ -->
+  <div class="page" id="ov">
+    <div class="grid g4" style="margin-bottom:16px">
+      <div class="card"><h3>总持仓</h3><div class="kpi" id="k-total">—</div><div class="sub" id="k-total-sub">—</div></div>
+      <div class="card"><h3>累计收益</h3><div class="kpi" id="k-profit">—</div><div class="sub" id="k-profit-sub">—</div></div>
+      <div class="card"><h3>当日盈亏</h3><div class="kpi" id="k-day">—</div><div class="sub" id="k-day-sub">—</div></div>
+      <div class="card"><h3>持仓数量</h3><div class="kpi" id="k-count">—</div><div class="sub" id="k-count-sub">—</div></div>
+    </div>
+    <div class="grid g4" style="margin-bottom:16px">
+      <div class="card span2" style="grid-column:span 2"><h3>资产配置</h3><div class="chart" id="c-alloc"></div></div>
+      <div class="card span2" style="grid-column:span 2"><h3>各持仓收益对比</h3><div class="chart" id="c-pnl"></div></div>
+    </div>
+    <div class="card">
+      <h3>持仓明细 <span class="tag">点击查看详情</span></h3>
+      <div class="scroll"><table id="t-hold"></table></div>
+    </div>
+  </div>
+
+  <!-- ============ B 场外基金 ============ -->
+  <div class="page" id="fund">
+    <div class="grid g4" style="margin-bottom:16px" id="fund-kpi"></div>
+    <div id="fund-list"></div>
+    <div class="note">定投累计份额按 <code>dca_plan.csv</code> 的计划参数与历史净值逐期回算；分红复投按 <code>dividend_policy.csv</code> 策略处理。<br>
+    长期预测为三情景复利推演，<b>三档年化回报由每只基金自身历史推导</b>（中性 = 该基金历史实现年化总回报，悲观/乐观 = 中性 ∓ σ×√(1/投影年数 + 1/历史年数)），<b>每只基金各不相同，已标在图例上</b>；该公式为本看板<b>自定口径</b>，样本越短越不可靠，<b>仅为模型推演，不构成投资建议</b>。<br>
+    场外基金评分仅含基本面（阶段收益口径）与技术面（净值走势口径）；<b>量价配合、资金面、信息面对场外基金不适用或暂无数据</b>，页面不做编造。</div>
+  </div>
+
+  <!-- ============ C 股票 / ETF ============ -->
+  <div class="page" id="stock">
+    <div class="grid g4" style="margin-bottom:16px" id="stock-kpi"></div>
+    <div id="stock-list"></div>
+    <div class="note warn"><b>五维评分卡说明：</b>分数为看板<b>自建口径</b>（对齐通达信诊断专家的维度划分：基本面 / 技术面 / 量价配合 / 资金面 / 信息面），
+    由各维子指标归一到 0–100 后等权加权，<b>不等于通达信 App 内闭源的原始五维分</b>。<br>
+    当前公开数据源可覆盖前三维；<b>资金面、信息面标为「暂无数据」</b>——需接入通达信资金流向与研报主题接口后补齐，页面不做任何编造。</div>
+  </div>
+
+  <!-- ============ D 分红汇总 ============ -->
+  <div class="page" id="div">
+    <div class="grid g4" style="margin-bottom:16px" id="div-kpi"></div>
+    <div class="card" style="margin-bottom:16px"><h3>红利再投记录 <span style="font-weight:400;color:var(--label-3);font-size:12px">· 你账户实际确认的再投份额</span></h3>
+      <div class="scroll"><table id="t-div-reinv"></table></div>
+      <div class="note" style="margin-left:0">来源为你提供的账户交易截图或确认数据，<b>优先于公开数据</b>。再投份额按当前净值折算市值，仅供参考。</div>
+    </div>
+    <div class="card"><h3>分红历史（公开数据）</h3>
+      <div class="scroll"><table id="t-div"></table></div>
+      <div class="note" style="margin-left:0">基金分红数据来自公开分红送配页（每 10 份派现金额已换算为每份）；股票股息明细接口尚需补齐，暂标注「暂无数据」。</div>
+    </div>
+  </div>
+
+  <footer>
+    <div>本看板由 WorkBuddy 生成，数据来自公开金融接口，每日自动刷新。所有指标仅供参考，<b>不构成任何投资建议</b>。</div>
+    <div id="warn-box"></div>
+    <div style="margin-top:8px;color:var(--label-3)">交互说明：点击持仓行查看详情抽屉 · 抽屉可下拉关闭（带橡胶缓冲与动量投射）</div>
+  </footer>
+</div>
+
+<!-- ============ 详情抽屉（手势驱动） ============ -->
+<div class="sheet-mask" id="mask"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="sheet-grip" id="grip"><span></span></div>
+  <div class="sheet-head">
+    <h2 id="sheet-title">详情</h2>
+    <button class="x" id="sheet-close" aria-label="关闭">✕</button>
+  </div>
+  <div class="sheet-body" id="sheet-body"></div>
+</div>
+
+<button class="fab" id="fab"><span>＋</span>改配置</button>
+
+<script>
+/* ============================================================
+   Apple Fluid Interface — 交互层
+   核心原则：即时响应 / 连续运动 / 携带动量 / 边界橡胶缓冲 / 随时可打断
+   ============================================================ */
+const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const fmtMoney = v => v==null ? NA : Number(v).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtNum   = (v,d=2) => v==null ? NA : Number(v).toFixed(d);
+const fmtPct   = v => v==null ? NA : (v>0?'+':'')+Number(v).toFixed(2)+'%';
+const cls      = v => v==null ? 'flat' : (v>0?'up':(v<0?'down':'flat'));
+/* 带符号金额：正数 +¥x，负数 −¥x（避免出现「+¥-23.10」这种双符号） */
+const signedFmt = v => v==null ? NA : ((v>0?'+':'')+(v<0?'-':'')+'¥ '+fmtMoney(Math.abs(v)));
+const fmtBig   = v => {
+  if(v==null) return '—';
+  const a=Math.abs(v);
+  if(a>=1e8) return (v/1e8).toFixed(2)+'亿';
+  if(a>=1e4) return (v/1e4).toFixed(2)+'万';
+  return Number(v).toFixed(2);
+};
+const NA = '<span class="na">暂无数据</span>';
+const badge = t => t==='基金'?'<span class="badge f">基金</span>'
+  :(t==='ETF'?'<span class="badge e">ETF</span>':'<span class="badge s">股票</span>');
+
+/* ---------- 图表：跟随系统外观 ---------- */
+function isDark(){ return matchMedia('(prefers-color-scheme: dark)').matches; }
+function cvar(n){
+  const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  return v || '#8e8e93';
+}
+function axisTheme(){
+  const dark = isDark();
+  return {
+    line: dark?'rgba(255,255,255,.14)':'rgba(60,60,67,.16)',
+    label: dark?'rgba(235,235,245,.62)':'rgba(60,60,67,.72)',
+    split: dark?'rgba(255,255,255,.07)':'rgba(60,60,67,.08)',
+    tip: dark?'rgba(44,44,46,.94)':'rgba(255,255,255,.96)',
+    tipBorder: dark?'rgba(255,255,255,.14)':'rgba(60,60,67,.14)',
+    tipTxt: dark?'#fff':'#000',
+    txt: dark?'rgba(235,235,245,.95)':'rgba(0,0,0,.95)',
+    pal:['#007aff','#ff9500','#af52de','#34c759','#ff2d55','#5ac8fa']
+  };
+}
+function AX(n){ const t=axisTheme(); return {
+  axisLine:{lineStyle:{color:t.line}},
+  axisTick:{show:false},
+  axisLabel:{color:t.label,fontSize:11,fontFamily:'-apple-system,SF Pro Text,PingFang SC,sans-serif'},
+  splitLine:n==='y'?{lineStyle:{color:t.split}}:{show:false}
+};}
+function TIPx(){ const t=axisTheme(); return {
+  backgroundColor:t.tip,borderColor:t.tipBorder,borderWidth:.5,
+  extraCssText:'backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.14);padding:10px 13px',
+  textStyle:{color:t.tipTxt,fontSize:12.5,fontFamily:'-apple-system,SF Pro Text,PingFang SC,sans-serif'}
+};}
+
+let POS=null, DETAIL=null;
+const charts={};
+function draw(id,opt){
+  const el=document.getElementById(id); if(!el) return;
+  if(charts[id]) charts[id].dispose();
+  charts[id]=echarts.init(el,null,{renderer:'canvas'});
+  charts[id].setOption(opt);
+  if(!charts[id].__rs){
+    charts[id].__rs=true;
+    addEventListener('resize',()=>charts[id]&&charts[id].resize());
+  }
+  // 卡片宽度可能在 init 之后才定下来（grid 重排 / 高度改写），
+  // 下一帧与再下一帧各 resize 一次，确保画布尺寸与容器一致。
+  const c=charts[id];
+  requestAnimationFrame(()=>{ c.resize(); requestAnimationFrame(()=>c.resize()); });
+}
+addEventListener('resize',()=>Object.values(charts).forEach(c=>c.resize()));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+  if(POS) renderAll();
+});
+
+/* ---------- 分段控件：滑块弹性跟随 ---------- */
+const seg=document.getElementById('seg'), thumb=document.getElementById('thumb');
+function moveThumb(btn,animate=true){
+  const r=btn.getBoundingClientRect(), sr=seg.getBoundingClientRect();
+  if(!animate) thumb.style.transition='none';
+  thumb.style.width=r.width+'px';
+  thumb.style.transform=`translateX(${r.left-sr.left-2+seg.scrollLeft}px)`;
+  if(!animate) requestAnimationFrame(()=>thumb.style.transition='');
+}
+seg.querySelectorAll('button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    moveThumb(b);
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+    document.getElementById(b.dataset.p).classList.add('on');
+    if(!rm) requestAnimationFrame(()=>{ // 重放入场动画
+      const pg=document.getElementById(b.dataset.p);
+      pg.querySelectorAll(':scope > *').forEach(el=>{
+        el.style.animation='none'; void el.offsetWidth;
+        el.style.animation='';
+      });
+    });
+    setTimeout(()=>Object.values(charts).forEach(c=>c.resize()),70);
+  });
+});
+seg.addEventListener('scroll',()=>{
+  const on=seg.querySelector('button.on'); if(on) moveThumb(on,false);
+}, {passive:true});
+
+/* ---------- 数据加载 ---------- */
+async function boot(){
+  try{
+    const [p,d]=await Promise.all([
+      fetch('data/positions.json').then(r=>r.json()),
+      fetch('data/positions_detail.json').then(r=>r.json())
+    ]);
+    POS=p; DETAIL=d;
+    renderAll();
+    document.getElementById('boot').style.display='none';
+    const ov=document.getElementById('ov'); ov.classList.add('on');
+    requestAnimationFrame(()=>moveThumb(document.querySelector('.seg button.on'),false));
+  }catch(e){
+    document.getElementById('boot').innerHTML=
+      '数据加载失败：'+e.message+'<br><span style="font-size:12.5px">请确认 data/ 目录下的 json 已生成（运行 python3 fetch_data.py）</span>';
+  }
+}
+
+/* ---------- A 总览 ---------- */
+
+/* 数据新鲜度指示：
+   页面读的是 data/ 下已生成的 json，可能落后于最新行情。
+   这里按「抓取时间」算数据年龄，超过 20 小时就把圆点变橙色并写明「可能已过期」。
+   20 小时的依据：工作日 16:30 / 22:00 两轮刷新，正常情况下间隔最长约 18.5 小时。 */
+function renderStamp(updatedAt){
+  const el=document.getElementById('stamp');
+  if(!el) return;
+  el.textContent=updatedAt||'—';
+  const wrap=el.closest('.stamp');
+  if(wrap) wrap.classList.remove('stale');
+  const t=Date.parse(String(updatedAt||'').replace(/-/g,'/'));
+  if(!t || Number.isNaN(t)) return;
+  const hours=(Date.now()-t)/3600000;
+  if(hours>20){
+    el.textContent=updatedAt+'（'+Math.floor(hours)+' 小时前 · 可能已过期）';
+    if(wrap) wrap.classList.add('stale');
+  }else if(hours>1){
+    el.textContent=updatedAt+'（'+Math.floor(hours)+' 小时前）';
+  }
+}
+function renderOverview(){
+  const s=POS.summary, rows=POS.rows;
+  renderStamp(s.updated_at);
+
+  document.getElementById('k-total').textContent='¥ '+fmtMoney(s.total_mv);
+  document.getElementById('k-total-sub').textContent='成本 ¥ '+fmtMoney(s.total_cost);
+
+  const pf=document.getElementById('k-profit');
+  pf.className='kpi '+cls(s.total_profit);
+  pf.textContent=signedFmt(s.total_profit);
+  document.getElementById('k-profit-sub').innerHTML='收益率 <b class="'+cls(s.total_ret_pct)+'">'+fmtPct(s.total_ret_pct)+'</b>';
+
+  const dp=document.getElementById('k-day');
+  dp.className='kpi '+cls(s.total_day_pnl);
+  dp.textContent=signedFmt(s.total_day_pnl);
+  document.getElementById('k-day-sub').innerHTML='今日 <b class="'+cls(s.total_day_pct)+'">'+fmtPct(s.total_day_pct)+'</b>';
+
+  document.getElementById('k-count').textContent=rows.length+' 只';
+  const c={}; rows.forEach(r=>c[r.type]=(c[r.type]||0)+1);
+  document.getElementById('k-count-sub').textContent=Object.entries(c).map(([k,v])=>k+' '+v).join(' · ');
+
+  const t=axisTheme();
+  const alloc=Object.entries(s.alloc).filter(([k,v])=>v>0);
+  draw('c-alloc',{
+    color:[t.pal[2],t.pal[1],t.pal[0],t.pal[3]],
+    tooltip:{...TIPx(),trigger:'item',
+      formatter:p=>`<b>${p.name}</b><br/>¥ ${fmtMoney(p.value)}　${p.percent}%`},
+    legend:{bottom:2,icon:'circle',itemWidth:8,itemHeight:8,itemGap:18,
+      textStyle:{color:t.label,fontSize:12,fontFamily:'-apple-system,PingFang SC,sans-serif'}},
+    series:[{type:'pie',radius:['52%','74%'],center:['50%','45%'],
+      padAngle:1.6,itemStyle:{borderRadius:7,borderColor:'transparent',borderWidth:0},
+      label:{color:t.txt,fontSize:12.5,fontWeight:520,
+        formatter:'{b}\n{d}%',lineHeight:17},
+      labelLine:{lineStyle:{color:t.line},length:10,length2:12},
+      emphasis:{scale:true,scaleSize:6,itemStyle:{shadowBlur:16,shadowColor:'rgba(0,0,0,.18)'}},
+      data:alloc.map(([k,v])=>({name:k,value:v}))}]
+  });
+
+  const named=rows.map(r=>({n:(r.name||r.code),v:r.profit,ret:r.ret_pct,code:r.code,val:r.market_value}));
+  // 横条图高度随条数自适应：每条约 30px，避免条与条挤在一起
+  const pnlEl=document.getElementById('c-pnl');
+  if(pnlEl) pnlEl.style.height=Math.max(260, named.length*30+40)+'px';
+  draw('c-pnl',{
+    tooltip:{...TIPx(),trigger:'axis',axisPointer:{type:'shadow',shadowStyle:{color:'rgba(120,120,128,.10)'}},
+      formatter:ps=>{const i=ps[0].dataIndex;
+        const x=named[i];
+        return `<b>${x.n}</b> <span style="opacity:.6">${x.code}</span><br/>市值 ¥ ${fmtMoney(x.val)}<br/>收益 ¥ ${fmtMoney(x.v)}<br/>收益率 ${fmtPct(x.ret)}`;}},
+    grid:{left:8,right:92,top:10,bottom:26,containLabel:true},
+    xAxis:{type:'value',...AX(1),
+      axisLabel:{...AX(1).axisLabel,formatter:v=>fmtBig(v),hideOverlap:true,fontSize:10.5}},
+    yAxis:{type:'category',data:named.map(x=>x.n),...AX(0),inverse:true,
+      axisLabel:{...AX(0).axisLabel,color:t.txt,fontSize:11.5,
+        width:104,overflow:'truncate',ellipsis:'…'},splitLine:{show:false}},
+    series:[{type:'bar',data:named.map(x=>({value:x.v,
+        itemStyle:{color:x.v>=0?t.pal[4]:t.pal[3],
+          /* 圆角要落在【数值端】：正条从 0 向右长 → 右端圆角；负条从 0 向左长 → 左端圆角。
+             若两种都写 [0,7,7,0]，负条的圆角会跑到 0 轴上，看起来像「朝右长」，方向感是反的。 */
+          borderRadius:x.v>=0?[0,7,7,0]:[7,0,0,7]}})),
+      barWidth:'52%',barCategoryGap:'38%',
+      label:{show:true,position:'right',color:t.label,fontSize:11,
+        fontFamily:'-apple-system,SF Pro Text,sans-serif',
+        formatter:p=>fmtBig(p.value)+(named[p.dataIndex].ret!=null?'  '+fmtPct(named[p.dataIndex].ret):'')}}]
+  });
+
+  let h='<thead><tr><th>类型</th><th>代码</th><th>名称</th><th>份额 / 股数</th><th>成本价</th><th>现价</th><th>市值</th><th>累计收益</th><th>收益率</th><th>当日盈亏</th><th>综合分</th></tr></thead><tbody>';
+  rows.forEach((r,i)=>{
+    h+=`<tr data-i="${i}" style="cursor:pointer">
+      <td>${badge(r.type)}</td><td>${r.code}</td>
+      <td style="text-align:left;font-weight:520">${r.name||'—'}</td>
+      <td>${fmtNum(r.shares,0)}</td><td>${fmtNum(r.cost_price,4)}</td>
+      <td>${r.now==null?NA:fmtNum(r.now,4)}${r.nav_date?`<br><span style="font-size:11px;color:var(--label-3)">${r.nav_date}</span>`:''}</td>
+      <td style="font-weight:560">${fmtMoney(r.market_value)}</td>
+      <td class="${cls(r.profit)}">${signedFmt(r.profit)}</td>
+      <td class="${cls(r.ret_pct)}">${fmtPct(r.ret_pct)}</td>
+      <td class="${cls(r.day_pnl)}">${signedFmt(r.day_pnl)}</td>
+      <td><b>${r.overall_score==null?'—':r.overall_score}</b></td></tr>`;
+  });
+  h+='</tbody>';
+  const tb=document.getElementById('t-hold');
+  tb.innerHTML=h;
+  tb.querySelectorAll('tbody tr').forEach(tr=>{
+    tr.onclick=()=>openSheet(POS.rows[+tr.dataset.i]);
+  });
+}
+
+/* ---------- B 场外基金 ---------- */
+/* 场外基金 · 分红面板：次数 + 金额 + 再投份额明细 */
+function fundDividendPanel(r, dv, idx){
+  const recs=(dv.confirmed_records||[]).slice();
+  const hist=(DETAIL[r.code]||{}).dividends||[];
+  if(!hist.length && !recs.length) return '';
+
+  // 按确认日排序（新→旧）
+  recs.sort((a,b)=>(b.confirm_date||'').localeCompare(a.confirm_date||''));
+
+  const nHist   = dv.count||hist.length||0;               // 历史分红次数
+  const perSum  = dv.total_per_share||0;                  // 每份累计分红
+  const nRecent = dv.recent_count_12m||0;                 // 近12个月次数
+  const perRec  = dv.recent_per_share_12m||0;             // 近12个月每份
+  const cashNow = dv.cash_recent_12m!=null?dv.cash_recent_12m:dv.cash;  // 按现份额的近12月现金
+  const reinvSh = dv.confirmed_reinvest_shares||0;        // 累计再投份额
+  const reinvCost= dv.confirmed_reinvest_cost||0;         // 累计再投成本（按当时净值）
+  const nav     = r.nav||0;
+  const reinvVal= reinvSh*nav;                            // 再投份额按当前净值的现值
+  const reinvPnl= reinvVal - reinvCost;                   // 再投浮盈
+
+  // 累计分红总额估算：每份累计 × 当前份额（口径透明标注）
+  const cashAll = perSum*(r.shares||0);
+
+  let h=`<div class="div-panel">
+    <div class="div-head">
+      <span class="dot"></span>
+      <h4>分红情况</h4>
+      <span class="mode">${dv.mode||'—'}</span>
+    </div>
+    <div class="div-kpis">
+      <div><label>历史分红次数</label><b>${nHist}<span class="u">次</span></b></div>
+      <div><label>累计每份分红</label><b>${fmtNum(perSum,4)}<span class="u">元</span></b></div>
+      <div><label>近12月分红</label><b>${nRecent}<span class="u">次</span></b></div>
+      <div><label>近12月每份</label><b>${fmtNum(perRec,4)}<span class="u">元</span></b></div>
+      <div><label>近12月现金</label><b>¥ ${fmtMoney(cashNow)}</b></div>
+      <div><label>累计分红估算</label><b>¥ ${fmtMoney(cashAll)}</b></div>
+      ${reinvSh?`<div><label>再投累计份额</label><b class="hl">${fmtNum(reinvSh,2)}<span class="u">份</span></b></div>
+      <div><label>再投成本</label><b class="hl">¥ ${fmtMoney(reinvCost)}</b></div>
+      <div><label>再投浮盈</label><b class="${cls(reinvPnl)}">${signedFmt(reinvPnl)}</b></div>`:''}
+    </div>`;
+
+  // 明细列表
+  if(recs.length){
+    h+=`<div class="div-list">`;
+    recs.slice(0,6).forEach(x=>{
+      h+=`<div class="row">
+        <span class="d">${x.confirm_date||x.ex_date||'—'}</span>
+        <span class="t">${x.note||'红利再投确认'}</span>
+        <span class="s">+ ${fmtNum(x.reinvest_shares,2)} 份</span>
+      </div>`;
+    });
+    if(recs.length>6) h+=`<div class="more">另有 ${recs.length-6} 笔更早的再投记录，见「分红汇总」页</div>`;
+    h+=`</div>`;
+  }else{
+    h+=`<div class="more" style="padding:9px 14px 11px">暂无用户确认的再投记录；下方为公开数据的分红历史（未含再投份额）。</div>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+
+/* 年度分红推演：按定投计划推演未来 N 年「每年可得分红」（毛额，红利再投前）
+   数据全部由 fetch_data.py 的 build_dividend_projection() 预先算好，
+   页面只负责渲染 —— 保持「数据与页面分离」。没有定投计划时后端返回 {}，这里不渲染。 */
+function fundDivProjPanel(r, dp, idx){
+  if(!dp || !dp.scenarios) return '';
+  const t=axisTheme(), a=dp.assumptions||{}, scen=dp.scenarios;
+  const mid=scen['中性']||{}, rows=mid.yearly||[];
+  if(!rows.length) return '';
+  const years=dp.years||rows.length;
+  const basis=a.dividend_basis||{};
+  const rm=a.rate_meta||{};
+  const rmap=a.rates||{};
+  const rTxt=['悲观','中性','乐观'].filter(k=>rmap[k]!=null)
+    .map(k=>`${k} <b>${fmtNum(rmap[k]*100,2)}%</b>`).join('　/　');
+  const last=rows[rows.length-1];
+  const pick=lab=>{ const y=(scen[lab]||{}).yearly||[]; return y; };
+  const yB=pick('悲观'), yZ=pick('中性'), yO=pick('乐观');
+  /* 表格表头用曲线的颜色，跟上面的图对上（悲观绿 / 中性蓝 / 乐观红） */
+  const cB=t.pal[3], cZ=t.pal[0], cO=t.pal[4];
+
+  let h=`<div class="div-panel div-proj">
+    <div class="div-head">
+      <span class="dot"></span>
+      <h4>定投计划下的年度分红推演</h4>
+      <span class="mode">未来 ${years} 年</span>
+    </div>
+    <div class="div-kpis">
+      <div><label>推演分红率</label><b>${fmtNum((a.dividend_yield||0)*100,2)}<span class="u">%</span></b></div>
+      <div><label>周定投</label><b>¥ ${fmtMoney(a.weekly)}</b></div>
+      <div><label>${years}年累计投入</label><b>¥ ${fmtMoney(mid.cum_contrib)}</b></div>
+      <div><label>第 ${years} 年当年分红</label><b class="hl">¥ ${fmtMoney(last.dividend)}</b></div>
+      <div><label>${years}年累计分红</label><b class="hl">¥ ${fmtMoney(last.cum_dividend)}</b></div>
+    </div>
+    <div class="lead">按<b>每周 ¥${fmtMoney(a.weekly)}</b>（年投 ¥${fmtMoney(a.annual_contrib)}）的定投计划持续投入 ${years} 年，
+      且<b>红利全部再投</b>；金额为<b>毛额</b>（再投前的分红）。
+      分红率由公开分红全历史推算：平均每份 ${fmtNum(basis.avg_per_share,4)} 元 × 约 ${fmtNum(basis.per_year,2)} 次/年 ÷ 当前净值。</div>
+    <div class="lead" style="padding-top:4px">三档年化回报 ${rTxt}，
+      <b>由本基金自身历史推导</b>：样本 ${fmtNum(rm.history_years,2)} 年（${rm.basis||'—'}，${rm.sample_days||0} 个交易日），
+      实现年化 <b>${fmtNum((rm.realized_annual||0)*100,2)}%</b>、年化波动 σ <b>${fmtNum((rm.volatility_annual||0)*100,2)}%</b>；
+      悲观/乐观 = 中性 ∓ σ×√(1/${years} + 1/历史年数)。
+      <b>该公式是本看板自定口径，且样本越短越不可靠，仅作推演。</b></div>
+    <div class="lead" style="padding-top:4px">分红按<b>股息率</b>推：金额 = 份额 × 每份分红额，而每份分红额 = 净值 × ${fmtNum((a.dividend_yield||0)*100,2)}%。
+      所以本口径<b>等价于假设「每份分红额随净值同比例增长」</b>${a.per_share_multiple?`：表中「每份年分红」由 <b>${fmtNum(a.per_share_first,4)} 元</b> 升至第 ${years} 年的 <b>${fmtNum(a.per_share_last,4)} 元（${a.per_share_multiple} 倍）</b>`:''}。
+      基金实际宣告的是每份固定金额（如 0.011 元），<b>这是一个稳态假设，不是事实</b>；表中已把每份分红额逐年列出供你核对。</div>
+    <div style="padding:6px 14px 0"><div class="chart sm" id="divp-${idx}"></div></div>
+    <div class="sc"><table>
+      <thead><tr><th>年份</th><th>年末份额</th>
+        <th>每份年分红<br><span style="font-weight:400">(中性)</span></th>
+        <th style="color:${cB}">悲观</th><th style="color:${cZ}">中性</th><th style="color:${cO}">乐观</th>
+        <th>累计分红<br><span style="font-weight:400">(中性)</span></th></tr></thead>
+      <tbody>`;
+  rows.forEach(x=>{
+    const i=x.year-1;
+    const b=yB[i]||{}, o=yO[i]||{};
+    h+=`<tr>
+      <td style="text-align:left">第 ${x.year} 年</td>
+      <td>${fmtNum(x.shares,0)}</td>
+      <td>${fmtNum(x.per_share,4)}</td>
+      <td style="color:${cB}">${fmtNum(b.dividend,0)}</td>
+      <td style="font-weight:560;color:${cZ}">${fmtNum(x.dividend,0)}</td>
+      <td style="color:${cO}">${fmtNum(o.dividend,0)}</td>
+      <td>${fmtNum(x.cum_dividend,0)}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div>
+    <div class="more" style="padding:9px 14px 11px">${a.note||''}</div>
+  </div>`;
+  return h;
+}
+
+/* 定投核对提示：对比「填报份额」与「定投回算份额」，提示是否需要更新
+   为什么需要人工核对：定投实际确认份额受 T+1 净值、确认日、尾数截断影响，
+   与回算值总有零点几分的出入，账户里的真数只有用户能给。 */
+function fundPendingPanel(r, d, dv, idx){
+  if(!d || !d.periods) return '';
+
+  const actual   = parseFloat(r.shares)||0;        // 持仓卡片上的填报份额
+  const replay   = parseFloat(d.shares)||0;        // 脚本回算的定投累计份额
+  const base     = parseFloat(d.base_shares)||0;   // 定投开始前的存量份额
+  const reinv    = parseFloat((dv||{}).confirmed_reinvest_shares)||0;  // 建仓后累计分红再投份额
+  const periods  = d.periods;
+  const lastDet  = (d.detail||[])[d.detail.length-1] || {};
+  const lastDate = lastDet.deal_date||'—';
+  const navNow   = parseFloat(r.nav)||0;
+
+  // 建议份额 = 存量 + 定投回算 + 分红再投
+  const expect   = base + replay + reinv;
+  const diff     = expect - actual;
+  const diffPct  = actual ? (diff/actual*100) : 0;
+
+  // 判定阈值：1 份以内视为一致（份额尾数截断的正常范围）
+  const ok       = Math.abs(diff) <= 1.0;
+  const nav      = navNow;
+  const diffVal  = diff * nav;                     // 差异的市值影响
+
+  // 已确认的实际成交
+  const confDates = d.confirmed_dates||[];
+  const confN     = confDates.length;
+
+  const parts = [`存量 <b>${fmtNum(base,2)}</b>`, `定投回算 <b>${fmtNum(replay,2)}</b>`];
+  if(reinv) parts.push(`分红再投 <b>${fmtNum(reinv,2)}</b>`);
+
+  let h=`<div class="pend ${ok?'':'warn'}">
+    <div class="pend-head">
+      <span class="dot"></span>
+      <h4>份额核对</h4>
+      <span class="st">${ok?'✓ 已一致':'● 待确认'}</span>
+    </div>
+    <div class="pend-body">
+      <div class="pend-kpis">
+        <div><label>填报份额</label><b>${fmtNum(actual,2)}<span class="u">份</span></b></div>
+        <div><label>定投回算</label><b>${fmtNum(replay,2)}<span class="u">份</span></b></div>
+        ${reinv?`<div><label>分红再投</label><b>${fmtNum(reinv,2)}<span class="u">份</span></b></div>`:''}
+        <div><label>建议份额</label><b class="hl">${fmtNum(expect,2)}<span class="u">份</span></b></div>
+        <div><label>差异</label><b class="${ok?'':'warnc'}">${diff>0?'+':''}${fmtNum(diff,2)}<span class="u">份</span></b></div>
+        <div><label>已投期数</label><b>${periods}<span class="u">期</span></b></div>
+        <div><label>最近一期</label><b style="font-size:13px">${lastDate}</b></div>
+      </div>
+      <div class="pend-note">
+        ${ok
+          ? `填报份额与「${parts.join(' + ')}」相差 <b>${fmtNum(Math.abs(diff),2)}</b> 份，在份额尾数截断的正常范围内，<b>无需更新</b>。`
+          : `建议核对：按「${parts.join(' + ')}」推算为 <b>${fmtNum(expect,2)}</b> 份，与填报的 <b>${fmtNum(actual,2)}</b> 份相差 <b>${fmtNum(Math.abs(diff),2)}</b> 份（约 ¥${fmtMoney(Math.abs(diffVal))}）。<br>请核对账户实际份额后告知，我来更新 <code>holdings.csv</code>。`
+        }
+        ${confN?`<br>其中 <b>${confN}</b> 期为账户实际确认值（已覆盖回算）。`:''}
+      </div>
+      ${(d.detail&&d.detail.length)?`<div class="pend-hist">
+        ${d.detail.slice(-4).reverse().map(x=>{
+          const cf=x.confirmed;
+          return '<div class="r">'+
+            '<span class="dt">'+(x.deal_date||'—')+'</span>'+
+            '<span class="sh" style="'+(cf?'':'font-weight:400;color:var(--label-2)')+'">'+
+              (cf?'✓ ':'')+fmtNum(x.shares,2)+' 份</span>'+
+            '<span class="df '+(cf?'ok':'')+'">净值 '+fmtNum(x.nav,4)+'</span>'+
+          '</div>';
+        }).join('')}
+      </div>`:''}
+    </div>
+  </div>`;
+  return h;
+}
+
+function renderFunds(){
+  const funds=POS.rows.filter(r=>r.type==='基金');
+  const t=axisTheme();
+  let tInv=0,tVal=0,tDiv=0,tReinv=0,tReinvVal=0,tCost=0,tMv=0,tProfit=0;
+  funds.forEach(r=>{
+    tInv+=(r.dca||{}).invested||0; tVal+=(r.dca||{}).value||0;
+    tCost+=r.cost||0; tMv+=r.market_value||0;
+    if(r.profit!=null) tProfit+=r.profit;
+    const dv=r.dividend||{};
+    tDiv+=(dv.cash_recent_12m!=null?dv.cash_recent_12m:(dv.cash||0));
+    const cs=dv.confirmed_reinvest_shares||0;
+    tReinv+=cs; tReinvVal+=cs*(r.nav||0);
+  });
+  const tRetPct = tCost ? (tMv/tCost-1)*100 : null;
+
+  /* 净值更新盈亏：场外基金「最近一次净值更新」带来的盈亏。
+     量 = Σ 各基金 day_pnl，而 day_pnl = 份额 ×（最新净值 − 上一交易日净值），
+     由 fetch_data.py 按完整日净值序列算出（页面里的 nav_series 是抽稀后的，不能用来反推）。
+     幅度分母取「更新前市值」= 当前市值 − 当日盈亏，与 summary 里 total_day_pct 同口径。
+     ⚠️ 各基金净值日可能不同（本次 007466 就晚一天）：全部计入，并在副标题如实标注。 */
+  const navUpd  = funds.filter(r=>r.day_pnl!=null);
+  const tNavPnl = navUpd.reduce((a,r)=>a+r.day_pnl,0);
+  const tNavPrev= navUpd.reduce((a,r)=>a+(r.market_value||0)-r.day_pnl,0);
+  const navPct  = tNavPrev ? (tNavPnl/tNavPrev*100) : null;
+  const navDays = navUpd.map(r=>r.nav_date).filter(Boolean).sort();
+  const navDay  = navDays.length ? navDays[navDays.length-1] : null;
+  const lateDays= navDays.filter(d=>d!==navDay);            // 净值日早于最新日的那些
+  const lagDays = [...new Set(lateDays)];                    // 去重后的日期
+  /* 幅度极小时避免显示成「-0.00%」——看起来像坏了 */
+  const navPctTxt = navPct==null ? NA
+    : (Math.abs(navPct)<0.005 ? '0.00%' : fmtPct(navPct));
+  const lagTxt = lateDays.length
+    ? `；另 ${lateDays.length} 只净值日更早（${lagDays.join('、')}）` : '';
+  const navSub = navUpd.length
+    ? `净值日 ${navDay||'—'} · ${navPctTxt}（最近一次净值更新带来${lagTxt}）`
+    : NA;
+
+  /* 卡片：[标题, 主数值, 副标题, 涨跌类, 用大号数字?] */
+  const kpi=[
+    ['基金持仓市值','¥ '+fmtMoney(tMv),'持仓成本 ¥ '+fmtMoney(tCost)+'　·　'+funds.length+' 只',''],
+    ['基金持仓浮盈',signedFmt(tProfit),'持仓收益率 '+fmtPct(tRetPct),cls(tProfit)],
+    ['净值更新盈亏',navUpd.length?signedFmt(tNavPnl):NA,navSub,cls(tNavPnl),true],
+    ['定投已投入','¥ '+fmtMoney(tInv),'当前市值 ¥ '+fmtMoney(tVal),''],
+    ['定投浮盈',signedFmt(tVal-tInv),'定投收益率 '+fmtPct(tInv?((tVal/tInv-1)*100):null),cls(tVal-tInv)],
+    ['近12月分红','¥ '+fmtMoney(tDiv),'按当前份额折算（估算）',''],
+    ['红利再投累计',fmtNum(tReinv,2)+' 份','市值 ¥ '+fmtMoney(tReinvVal),'']
+  ];
+  document.getElementById('fund-kpi').innerHTML=kpi.map(([a,b,c2,d,big])=>
+    `<div class="card"><h3>${a}</h3><div class="${big?'kpi':'kpi sm'} ${d}">${b}</div><div class="sub">${c2}</div></div>`).join('');
+
+  let html='';
+  funds.forEach((r,idx)=>{
+    const d=r.dca||{},dv=r.dividend||{};
+    /* 这两栏是「有则显示」：
+       - 没定投计划（dca_plan.csv 里没有该代码）→ 不渲染「定投计划与累计份额」，
+         净值走势图顺势通栏，卡片高度跟着收短；
+       - 没有预测数据（projection.scenarios 为空）→ 不渲染投影图的容器。
+         否则会留下一个 250px 高的空壳（.chart.sm 是固定高度），把卡片无谓地撑高。 */
+    const hasDca  = !!(d.plan || d.periods!=null);
+    const hasProj = !!(((DETAIL[r.code]||{}).projection||{}).scenarios);
+    /* 年度分红推演：后端只在「有定投计划且算得出分红率」时产出，这里拿到就渲染 */
+    const divProj = (DETAIL[r.code]||{}).dividend_projection;
+    html+=`<div class="pos">
+      <div class="pos-head">
+        <div>
+          <div class="pos-title">${r.name||''} <em>${r.code}</em> ${badge(r.type)}</div>
+          <div class="sub">${r.manager?('基金经理 <b style="color:var(--label)">'+r.manager+'</b>'+(r.manager_worktime?'（从业 '+r.manager_worktime+'）':'')+(r.manager_power?'　能力分 '+r.manager_power:'')+'　·　'):''}${r.scale?('规模 '+r.scale+' 亿元'+(r.scale_date?'（'+r.scale_date+'）':'')+'　·　'):''}净值 ${fmtNum(r.nav,4)}　${r.nav_date||'—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="kpi sm ${cls(r.ret_pct)}">${fmtPct(r.ret_pct)}</div>
+          <div class="sub">持仓收益 <span class="${cls(r.profit)}">${signedFmt(r.profit)}</span></div>
+        </div>
+      </div>
+      <div class="mini">
+        <div><label>持仓份额</label><b>${fmtNum(r.shares,2)}</b></div>
+        <div><label>成本价</label><b>${fmtNum(r.cost_price,4)}</b></div>
+        <div><label>现价 / 净值</label><b>${fmtNum(r.nav,4)}</b></div>
+        <div><label>持仓成本</label><b>¥ ${fmtMoney(r.cost)}</b></div>
+        <div><label>市值</label><b>¥ ${fmtMoney(r.market_value)}</b></div>
+        <div><label>持仓浮盈</label><b class="${cls(r.profit)}">${signedFmt(r.profit)}</b></div>
+        <div><label>持仓收益率</label><b class="${cls(r.ret_pct)}">${fmtPct(r.ret_pct)}</b></div>
+        <div><label>当日涨跌</label><b class="${cls(r.day_pct)}">${fmtPct(r.day_pct)}</b></div>
+        <div><label>近1月 / 近3月</label><b class="${cls(r.syl_1y)}">${fmtPct(r.syl_1y)}</b></div>
+        <div><label>近6月 / 近1年</label><b class="${cls(r.syl_1n)}">${fmtPct(r.syl_1n)}</b></div>
+      </div>
+      ${hasDca ? `
+      <div class="grid" style="grid-template-columns:minmax(290px,1fr) minmax(400px,1.65fr);margin-top:14px">
+        <div>
+          <h3 style="font-size:13px;color:var(--label-2);font-weight:590;margin-bottom:9px">定投计划与累计份额</h3>
+          <div class="mini">
+            <div><label>计划</label><b>${d.plan?`${d.plan.frequency}投 ¥${d.plan.amount}`:NA}</b></div>
+            <div><label>已投期数</label><b>${d.periods==null?NA:d.periods+' 期'}</b></div>
+            <div><label>累计投入</label><b>${fmtMoney(d.invested)}</b></div>
+            <div><label>累计份额</label><b>${fmtNum(d.shares,2)}</b></div>
+            <div><label>定投均价</label><b>${fmtNum(d.avg_cost,4)}</b></div>
+            <div><label>定投收益率</label><b class="${cls(d.ret_pct)}">${fmtPct(d.ret_pct)}</b></div>
+          </div>
+        </div>
+        <div><div class="chart sm" id="nav-${idx}"></div></div>
+      </div>` : `
+      <div style="margin-top:14px"><div class="chart sm" id="nav-${idx}"></div></div>`}
+      ${fundPendingPanel(r, d, dv, idx)}
+      ${fundDividendPanel(r, dv, idx)}
+      ${fundDivProjPanel(r, divProj, idx)}
+      ${hasProj ? `<div style="margin-top:14px"><div class="chart sm" id="proj-${idx}"></div></div>` : ''}
+    </div>`;
+  });
+  document.getElementById('fund-list').innerHTML=html;
+
+  funds.forEach((r,idx)=>{
+    const s=DETAIL[r.code]||{},navs=s.nav_series||[];
+    draw('nav-'+idx,{
+      tooltip:{...TIPx(),trigger:'axis'},
+      grid:{left:6,right:12,top:14,bottom:6,containLabel:true},
+      xAxis:{type:'category',data:navs.map(x=>x.date),...AX(0)},
+      yAxis:{type:'value',scale:true,...AX(1)},
+      dataZoom:[{type:'inside'}],
+      series:[{type:'line',data:navs.map(x=>x.nav),smooth:.22,showSymbol:false,
+        itemStyle:{color:t.pal[0]},
+        lineStyle:{color:t.pal[0],width:2},
+        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
+          {offset:0,color:'rgba(0,122,255,.26)'},{offset:1,color:'rgba(0,122,255,0)'}])}}]
+    });
+    const pj=s.projection||{};
+    if(pj.scenarios){
+      const yrs=pj.years||10, weekly=pj.weekly||0;
+      const x=Array.from({length:yrs+1},(_,i)=>'第 '+i+' 年');
+      const start=(s.dca||{}).value||0, inv0=(s.dca||{}).invested||0;
+      /* 三档年化回报由后端按【该基金自身历史】推导后随数据下发（pj.rates），前端不再写死。
+         这里按同一口径（周复利 + 每周投入）重建曲线形状，再按后端终值等比缩放，
+         正常情况下 scale≈1，仅作兜底。 */
+      const rate=pj.rates||{};
+      const series=Object.entries(pj.scenarios).map(([k,final])=>{
+        const rr=rate[k];
+        if(rr==null) return null;
+        const rrW=Math.pow(1+rr/12,12/52)-1, vals=[start];
+        for(let i=1;i<=yrs;i++){
+          let v=vals[i-1];
+          for(let w=0;w<52;w++) v=v*(1+rrW)+weekly;
+          vals.push(v);
+        }
+        const scale=final/(vals[yrs]||1);
+        const col=k==='悲观'?t.pal[3]:(k==='中性'?t.pal[0]:t.pal[4]);
+        return {name:`${k} ${(rr*100).toFixed(2)}%`,type:'line',smooth:.24,showSymbol:false,
+          /* 图例与 tooltip 的标记取色看的是 itemStyle.color，不是 lineStyle.color。
+             只设后者的话，它们会回落到 ECharts 默认调色板，
+             于是出现「线是绿的、图例却是蓝的」这种错位。两处必须写同一个色。 */
+          itemStyle:{color:col},
+          data:vals.map(v=>+(v*scale).toFixed(2)),
+          lineStyle:{color:col,width:2.2,type:k==='中性'?'solid':(k==='乐观'?'dashed':'dotted')}};
+      }).filter(Boolean);
+      series.push({name:'累计投入',type:'line',showSymbol:false,
+        itemStyle:{color:t.label},
+        data:Array.from({length:yrs+1},(_,i)=>inv0+weekly*52*i),
+        lineStyle:{color:t.label,width:1.4,type:'dashed',opacity:.6}});
+      draw('proj-'+idx,{
+        tooltip:{...TIPx(),trigger:'axis',formatter:ps=>{
+          let o='<b>'+ps[0].axisValue+'</b><br/>';
+          ps.forEach(p=>o+=`${p.marker} ${p.seriesName}：¥ ${fmtBig(p.value)}<br/>`);return o;}},
+        legend:{top:0,right:0,icon:'roundRect',itemWidth:14,itemHeight:8,itemGap:16,
+          textStyle:{color:t.label,fontSize:11.5,fontFamily:'-apple-system,PingFang SC,sans-serif'}},
+        grid:{left:6,right:12,top:34,bottom:6,containLabel:true},
+        xAxis:{type:'category',data:x,...AX(0)},
+        yAxis:{type:'value',...AX(1),axisLabel:{...AX(1).axisLabel,formatter:v=>fmtBig(v)}},
+        series:series
+      });
+    }
+
+    /* 年度分红推演：三条情景线（悲观绿 / 中性蓝 / 乐观红，与表头同色） */
+    const dpj=s.dividend_projection||{};
+    if(dpj.scenarios){
+      const rowsD=((dpj.scenarios['中性']||{}).yearly)||[];
+      const colD={'悲观':t.pal[3],'中性':t.pal[0],'乐观':t.pal[4]};
+      const styleD={'悲观':'dotted','中性':'solid','乐观':'dashed'};
+      const rateD=(dpj.assumptions||{}).rates||{};
+      draw('divp-'+idx,{
+        tooltip:{...TIPx(),trigger:'axis',formatter:ps=>{
+          let o='<b>'+ps[0].axisValue+'</b><br/>';
+          ps.forEach(p=>o+=`${p.marker} ${p.seriesName}：¥ ${fmtMoney(p.value)}<br/>`);return o;}},
+        legend:{top:0,right:0,icon:'roundRect',itemWidth:14,itemHeight:8,itemGap:16,
+          textStyle:{color:t.label,fontSize:11.5,fontFamily:'-apple-system,PingFang SC,sans-serif'}},
+        grid:{left:6,right:12,top:34,bottom:6,containLabel:true},
+        xAxis:{type:'category',data:rowsD.map(x=>'第 '+x.year+' 年'),...AX(0)},
+        yAxis:{type:'value',...AX(1),axisLabel:{...AX(1).axisLabel,formatter:v=>fmtBig(v)}},
+        series:['悲观','中性','乐观'].filter(k=>rateD[k]!=null).map(k=>({
+          name:`${k} ${(rateD[k]*100).toFixed(2)}%`,type:'line',showSymbol:false,smooth:.22,
+          /* itemStyle.color 是图例/tooltip 标记的取色来源，必须与 lineStyle 同值 */
+          itemStyle:{color:colD[k]},
+          data:(((dpj.scenarios[k]||{}).yearly)||[]).map(x=>x.dividend),
+          lineStyle:{color:colD[k],width:2.2,type:styleD[k]}}))
+      });
+    }
+  });
+}
+
+/* ---------- C 股票 / ETF ---------- */
+const DIM_NAMES=['基本面','技术面','量价配合','资金面','信息面'];
+function renderStocks(){
+  const list=POS.rows.filter(r=>r.type!=='基金');
+  const t=axisTheme();
+
+  /* ---- 股票 / ETF 持仓总览：与场外基金页同口径 ---- */
+  let tCost=0,tMv=0,tProfit=0,tDay=0;
+  const byType={};
+  list.forEach(r=>{
+    tCost+=r.cost||0; tMv+=r.market_value||0;
+    if(r.profit!=null) tProfit+=r.profit;
+    if(r.day_pnl!=null) tDay+=r.day_pnl;
+    byType[r.type]=(byType[r.type]||0)+1;
+  });
+  const tRetPct = tCost ? (tMv/tCost-1)*100 : null;
+  const tDayPct = (tMv-tDay) ? (tDay/(tMv-tDay)*100) : null;
+  // 成本最高的一只，用于副标题提示
+  const top=list.slice().sort((a,b)=>(b.market_value||0)-(a.market_value||0))[0];
+  const best=list.slice().filter(r=>r.ret_pct!=null).sort((a,b)=>b.ret_pct-a.ret_pct)[0];
+  const worst=list.slice().filter(r=>r.ret_pct!=null).sort((a,b)=>a.ret_pct-b.ret_pct)[0];
+  const winN=list.filter(r=>r.profit>0).length;
+
+  const kpi=[
+    ['证券持仓市值','¥ '+fmtMoney(tMv),'持仓成本 ¥ '+fmtMoney(tCost)+'　·　'+Object.entries(byType).map(([k,v])=>k+' '+v).join(' · '),''],
+    ['证券持仓浮盈',signedFmt(tProfit),'持仓收益率 '+fmtPct(tRetPct),cls(tProfit)],
+    ['当日盈亏',signedFmt(tDay),'今日 '+fmtPct(tDayPct),cls(tDay)],
+    ['盈利 / 持仓',winN+' / '+list.length+' 只',best&&worst?('最佳 '+best.name+' '+fmtPct(best.ret_pct)+'　最差 '+worst.name+' '+fmtPct(worst.ret_pct)):'','']
+  ];
+  document.getElementById('stock-kpi').innerHTML=kpi.map(([a,b,c2,d])=>
+    `<div class="card"><h3>${a}</h3><div class="kpi sm ${d}">${b}</div><div class="sub">${c2}</div></div>`).join('');
+
+  let html='';
+  list.forEach((r,idx)=>{
+    const dims=r.dims||{},s=r.support||{};
+    html+=`<div class="pos">
+      <div class="pos-head">
+        <div>
+          <div class="pos-title">${r.name||''} <em>${r.code}</em> ${badge(r.type)}</div>
+          <div class="sub">现价 <b style="color:var(--label)">${fmtNum(r.now,3)}</b>　当日 <b class="${cls(r.pct)}">${fmtPct(r.pct)}</b>
+            ${r.pe?`　PE ${fmtNum(r.pe,2)}`:''}${r.pb?`　PB ${fmtNum(r.pb,2)}`:''}
+            ${r.total_mv?`　总市值 ${fmtBig(r.total_mv*1e8)}`:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="kpi sm ${cls(r.ret_pct)}">${fmtPct(r.ret_pct)}</div>
+          <div class="sub">持仓收益 <span class="${cls(r.profit)}">${signedFmt(r.profit)}</span></div>
+        </div>
+      </div>
+      <div class="mini">
+        <div><label>持仓</label><b>${fmtNum(r.shares,0)} ${r.type==='ETF'?'份':'股'}</b></div>
+        <div><label>成本价</label><b>${fmtNum(r.cost_price,3)}</b></div>
+        <div><label>现价</label><b>${fmtNum(r.now,3)}</b></div>
+        <div><label>持仓成本</label><b>¥ ${fmtMoney(r.cost)}</b></div>
+        <div><label>市值</label><b>¥ ${fmtMoney(r.market_value)}</b></div>
+        <div><label>持仓浮盈</label><b class="${cls(r.profit)}">${signedFmt(r.profit)}</b></div>
+        <div><label>持仓收益率</label><b class="${cls(r.ret_pct)}">${fmtPct(r.ret_pct)}</b></div>
+        <div><label>当日盈亏</label><b class="${cls(r.day_pnl)}">${signedFmt(r.day_pnl)}</b></div>
+        <div><label>支撑位</label><b class="down">${s.support1?fmtNum(s.support1,3):NA}</b></div>
+        <div><label>压力位</label><b class="up">${s.resistance1?fmtNum(s.resistance1,3):NA}</b></div>
+      </div>
+      <div class="grid" style="grid-template-columns:minmax(300px,1fr) minmax(420px,1.4fr);margin-top:14px">
+        <div>
+          <div class="chart sm" id="radar-${idx}"></div>
+          <div class="sub" style="text-align:center">五维评分卡（自建口径）　综合分 <b style="color:var(--label)">${r.overall_score==null?'—':r.overall_score}</b></div>
+        </div>
+        <div>
+          <h3 style="font-size:13px;color:var(--label-2);font-weight:590;margin-bottom:9px">持仓安全度与关键价位</h3>
+          <div class="mini" style="margin-bottom:10px">
+            <div><label>安全度评分</label><b>${s.safety_score==null?NA:s.safety_score}</b></div>
+            <div><label>距支撑位</label><b class="down">${fmtPct(s.support_dist)}</b></div>
+            <div><label>距压力位</label><b class="up">${fmtPct(s.resistance_dist)}</b></div>
+            <div><label>近一年价格分位</label><b>${s.pos_pct_1y==null?NA:s.pos_pct_1y+'%'}</b></div>
+            <div><label>年化波动率</label><b>${r.volatility==null?NA:r.volatility+'%'}</b></div>
+            <div><label>RSI(14)</label><b>${r.rsi==null?NA:r.rsi}</b></div>
+          </div>
+          <div class="sub">支撑2 / 压力2：${s.support2?fmtNum(s.support2,3):'—'} / ${s.resistance2?fmtNum(s.resistance2,3):'—'}</div>
+          <div class="chart sm" id="kline-${idx}" style="margin-top:9px"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('stock-list').innerHTML=html;
+
+  list.forEach((r,idx)=>{
+    const dims=r.dims||{};
+    draw('radar-'+idx,{
+      tooltip:{...TIPx()},
+      radar:{
+        indicator:DIM_NAMES.map(n=>({name:n+(dims[n]==null?'（暂无）':' '+dims[n]),max:100})),
+        radius:'64%',center:['50%','53%'],
+        axisName:{color:t.label,fontSize:11.5,
+          fontFamily:'-apple-system,PingFang SC,sans-serif'},
+        splitLine:{lineStyle:{color:t.split}},
+        splitArea:{areaStyle:{color:[isDark()?'rgba(255,255,255,.012)':'rgba(120,120,128,.035)',
+          isDark()?'rgba(255,255,255,.03)':'rgba(120,120,128,.07)']}},
+        axisLine:{lineStyle:{color:t.line}}
+      },
+      series:[{type:'radar',symbolSize:5,data:[{value:DIM_NAMES.map(n=>dims[n]==null?0:dims[n]),name:'五维',
+        lineStyle:{color:t.pal[0],width:2},
+        areaStyle:{color:'rgba(0,122,255,.22)'},
+        itemStyle:{color:t.pal[0]}}]}]
+    });
+
+    const kl=(DETAIL[r.code]||{}).kline||[];
+    if(kl.length){
+      const s=r.support||{},marks=[];
+      if(s.support1) marks.push({yAxis:s.support1,
+        label:{formatter:'支撑 '+fmtNum(s.support1,3),color:t.pal[3],fontSize:10,position:'insideEndTop'},
+        lineStyle:{color:t.pal[3],type:'dashed',width:1}});
+      if(s.resistance1) marks.push({yAxis:s.resistance1,
+        label:{formatter:'压力 '+fmtNum(s.resistance1,3),color:t.pal[4],fontSize:10,position:'insideEndBottom'},
+        lineStyle:{color:t.pal[4],type:'dashed',width:1}});
+      draw('kline-'+idx,{
+        tooltip:{...TIPx(),trigger:'axis',axisPointer:{type:'cross',
+          crossStyle:{color:t.label},lineStyle:{color:t.line}}},
+        grid:{left:6,right:12,top:12,bottom:6,containLabel:true},
+        xAxis:{type:'category',data:kl.map(x=>x.date),...AX(0)},
+        yAxis:{type:'value',scale:true,...AX(1)},
+        dataZoom:[{type:'inside'}],
+        series:[{type:'candlestick',data:kl.map(x=>[x.open,x.close,x.low,x.high]),
+          itemStyle:{color:t.pal[4],color0:t.pal[3],borderColor:t.pal[4],borderColor0:t.pal[3]},
+          markLine:{symbol:'none',silent:true,data:marks}}]
+      });
+    }
+  });
+}
+
+/* ---------- D 分红 ---------- */
+function renderDividend(){
+  const all=[];          // 公开数据的分红历史（除息口径）
+  const confirmed=[];    // 用户确认的实际再投记录（权威）
+  let cash=0, reinvShares=0, reinvCost=0, reinvValue=0, costCovered=0, costN=0;
+  POS.rows.forEach(r=>{
+    const dv=r.dividend||{};
+    const nav=r.nav||0;
+    cash+=dv.cash_recent_12m!=null?dv.cash_recent_12m:(dv.cash||0);
+    reinvShares+=dv.confirmed_reinvest_shares||0;
+    reinvCost+=dv.confirmed_reinvest_cost||0;
+    (dv.confirmed_records||[]).forEach(x=>{
+      const sh=parseFloat(x.reinvest_shares)||0;
+      const cost=x.cost_at_reinvest;
+      if(cost!=null){ costN++; }
+      confirmed.push({...x, code:r.code, name:r.name, type:r.type, mode:dv.mode||'—',
+                      shares:sh, cost:cost, value:sh*nav,
+                      upnl: cost!=null ? sh*nav-cost : null});
+      reinvValue+=sh*nav;
+      costCovered+=cost!=null?1:0;
+    });
+    ((DETAIL[r.code]||{}).dividends||[]).forEach(d=>{
+      all.push({code:r.code,name:r.name,type:r.type,mode:dv.mode||'—',...d,cash:d.per_share*r.shares});
+    });
+  });
+  all.sort((a,b)=>(b.ex_date||'').localeCompare(a.ex_date||''));
+  confirmed.sort((a,b)=>(b.confirm_date||'').localeCompare(a.confirm_date||''));
+
+  const covered=confirmed.length?Math.round(costCovered/confirmed.length*100):0;
+  const pnl=reinvValue-reinvCost;
+  const kpi=[
+    ['红利再投累计份额', fmtNum(reinvShares,2)+' 份','用户确认的实际再投记录',''],
+    ['再投累计成本','¥ '+fmtMoney(reinvCost),'按每笔除息时净值计算（'+covered+'% 有净值）',''],
+    ['再投份额现值','¥ '+fmtMoney(reinvValue),'按当前净值折算',''],
+    ['再投浮盈',signedFmt(pnl),'现值 − 再投成本',cls(pnl)]
+  ];
+  document.getElementById('div-kpi').innerHTML=kpi.map(([a,b,c2,d])=>
+    `<div class="card"><h3>${a}</h3><div class="kpi sm ${d}">${b}</div><div class="sub">${c2}</div></div>`).join('');
+
+  // 表1：实际再投记录（权威）
+  let h1='<thead><tr><th>确认日</th><th>除息日</th><th>代码</th><th>名称</th><th>再投份额</th><th>除息时净值</th><th>再投成本</th><th>现值</th><th>浮盈</th><th>净值来源</th></tr></thead><tbody>';
+  if(!confirmed.length) h1+='<tr><td colspan="10" style="text-align:center;padding:30px" class="na">暂无确认的再投记录</td></tr>';
+  confirmed.forEach(d=>{
+    h1+=`<tr><td style="font-variant-numeric:tabular-nums">${d.confirm_date||'—'}</td>
+      <td style="font-variant-numeric:tabular-nums">${d.ex_date||'—'}</td><td>${d.code}</td>
+      <td style="text-align:left;font-weight:520">${d.name||'—'}</td>
+      <td style="font-weight:620;color:#c77800">+ ${fmtNum(d.shares,2)}</td>
+      <td style="font-variant-numeric:tabular-nums">${d.nav_at_reinvest?fmtNum(d.nav_at_reinvest,4):'—'}</td>
+      <td style="font-weight:560">${d.cost!=null?'¥ '+fmtMoney(d.cost):'—'}</td>
+      <td style="font-variant-numeric:tabular-nums">¥ ${fmtMoney(d.value)}</td>
+      <td style="font-weight:600" class="${d.upnl!=null?cls(d.upnl):''}">${d.upnl!=null?signedFmt(d.upnl):'—'}</td>
+      <td style="color:var(--label-3);font-size:11px">${d.nav_source||'—'}</td></tr>`;
+  });
+  h1+='</tbody>';
+  document.getElementById('t-div-reinv').innerHTML=h1;
+
+  // 表2：公开分红历史
+  let h2='<thead><tr><th>除息日</th><th>代码</th><th>名称</th><th>类型</th><th>分红方式</th><th>每10份派现</th><th>每份分红</th><th>按现份额折算</th><th>派发日</th></tr></thead><tbody>';
+  if(!all.length) h2+='<tr><td colspan="9" style="text-align:center;padding:30px" class="na">暂无数据：当前持仓无历史分红记录</td></tr>';
+  all.forEach(d=>{
+    h2+=`<tr><td style="font-variant-numeric:tabular-nums">${d.ex_date||'—'}</td><td>${d.code}</td>
+      <td style="text-align:left;font-weight:520">${d.name||'—'}</td><td>${badge(d.type)}</td>
+      <td>${d.mode}</td><td>${fmtNum(d.per10,4)}</td><td>${fmtNum(d.per_share,4)}</td>
+      <td style="font-weight:560">¥ ${fmtMoney(d.cash)}</td><td>${d.pay_date||'—'}</td></tr>`;
+  });
+  h2+='</tbody>';
+  document.getElementById('t-div').innerHTML=h2;
+}
+
+function renderWarnings(){
+  const w=POS.summary.warnings||[],box=document.getElementById('warn-box');
+  box.innerHTML=w.length
+    ? '<span class="bad">数据抓取警告：</span>'+w.map(x=>'<br>· '+x).join('')
+    : '<span class="ok">✓ 本次数据抓取无警告</span>';
+}
+function renderAll(){ renderOverview(); renderFunds(); renderStocks(); renderDividend(); renderWarnings(); }
+
+/* ============================================================
+   详情抽屉 — 手势驱动
+   · 拖拽 1:1 跟随手指（含抓取偏移）
+   · 释放时移交原始速度 → 动量投射计算吸附点
+   · 上边界橡胶缓冲，非硬截断
+   · 动画随时可打断：新动画从实时位置起算
+   ============================================================ */
+const sheet=document.getElementById('sheet'), mask=document.getElementById('mask'),
+      grip=document.getElementById('grip'), sbody=document.getElementById('sheet-body');
+
+function openSheet(r){
+  sbody.innerHTML=sheetHTML(r);
+  sheet.style.transition=''; sheet.style.transform='';   // 清掉拖拽残留，交还 CSS 控制
+  mask.classList.add('on'); sheet.classList.add('on');
+  sbody.scrollTop=0;
+  bindSwitch();
+}
+function closeSheet(){
+  mask.classList.remove('on');
+  sheet.style.transition=''; sheet.style.transform='';   // 先清残留，再让 CSS 的 102% 接管
+  sheet.classList.remove('dragging');
+  sheet.classList.remove('on');
+}
+mask.addEventListener('pointerdown',e=>{
+  // 只在遮罩本体按下并抬起时关闭，避免拖拽误触
+  if(e.target===mask) closeSheet();
+});
+document.getElementById('sheet-close').onclick=closeSheet;
+addEventListener('keydown',e=>{ if(e.key==='Escape') closeSheet(); });
+
+function sheetHTML(r){
+  const L=(a,b)=>`<div class="li" style="cursor:default"><div><div class="li-t">${a}</div></div><div class="li-v">${b}</div></div>`;
+  let h=`<div style="margin-bottom:16px">
+    <div class="li-t" style="font-size:21px;font-weight:680">${r.name||''}</div>
+    <div class="li-s">${r.code}　${r.type}　${r.account||''}</div></div>`;
+  h+='<div class="mini" style="margin-bottom:16px">'+
+    `<div><label>持有</label><b>${fmtNum(r.shares,0)}</b></div>`+
+    `<div><label>成本价</label><b>${fmtNum(r.cost_price,4)}</b></div>`+
+    `<div><label>现价</label><b>${r.now==null?'—':fmtNum(r.now,4)}</b></div>`+
+    `<div><label>市值</label><b>${fmtMoney(r.market_value)}</b></div>`+
+    `<div><label>累计收益</label><b class="${cls(r.profit)}">${signedFmt(r.profit)}</b></div>`+
+    `<div><label>收益率</label><b class="${cls(r.ret_pct)}">${fmtPct(r.ret_pct)}</b></div></div>`;
+  if(r.type==='基金'){
+    const d=r.dca||{},dv=r.dividend||{};
+    h+='<div class="li-t" style="margin:14px 0 4px;font-size:13px;color:var(--label-2)">定投计划</div>';
+    h+=L('频率 / 金额',d.plan?`${d.plan.frequency}投　¥ ${d.plan.amount}`:NA);
+    h+=L('已投期数',d.periods==null?NA:d.periods+' 期');
+    h+=L('累计投入 / 累计份额',`¥ ${fmtMoney(d.invested)}　/　${fmtNum(d.shares,2)} 份`);
+    h+=L('定投均价 / 收益率',`${fmtNum(d.avg_cost,4)}　/　<span class="${cls(d.ret_pct)}">${fmtPct(d.ret_pct)}</span>`);
+    h+=L('基金经理',r.manager?(r.manager+(r.manager_worktime?'（从业 '+r.manager_worktime+'）':'')):NA);
+    h+=L('基金经理能力分',r.manager_power?('<b>'+r.manager_power+'</b>'+(r.manager_fundsize?'　在管 '+r.manager_fundsize:'')):NA);
+    h+=L('基金规模',r.scale?(r.scale+' 亿元'+(r.scale_date?'（'+r.scale_date+'）':'')+(r.scale_mom?'　环比 '+r.scale_mom:'')):NA);
+    h+=L('申购费率 / 起购',`${r.fund_rate==null?'—':r.fund_rate+'%'}　/　${r.min_buy?('¥ '+r.min_buy):'—'}`);
+    h+=L('历史分红',`${dv.count||0} 次　累计每份 ${fmtNum(dv.total_per_share,4)} 元`);
+    h+=`<div class="li" style="cursor:default"><div><div class="li-t">红利再投</div>
+      <div class="li-s">关闭后改为现金分红</div></div>
+      <button class="sw ${dv.mode==='红利再投'?'on':''}" data-p="红利再投" aria-label="红利再投开关"><i></i></button></div>`;
+  }else{
+    const s=r.support||{};
+    h+='<div class="li-t" style="margin:14px 0 4px;font-size:13px;color:var(--label-2)">关键价位</div>';
+    h+=L('支撑位 1 / 2',`<span class="down">${s.support1?fmtNum(s.support1,3):'—'}</span>　/　${s.support2?fmtNum(s.support2,3):'—'}`);
+    h+=L('压力位 1 / 2',`<span class="up">${s.resistance1?fmtNum(s.resistance1,3):'—'}</span>　/　${s.resistance2?fmtNum(s.resistance2,3):'—'}`);
+    h+=L('距支撑 / 距压力',`<span class="down">${fmtPct(s.support_dist)}</span>　/　<span class="up">${fmtPct(s.resistance_dist)}</span>`);
+    h+=L('近一年价格分位',s.pos_pct_1y==null?NA:s.pos_pct_1y+'%');
+    h+=L('安全度评分',s.safety_score==null?NA:s.safety_score);
+    h+='<div class="li-t" style="margin:14px 0 4px;font-size:13px;color:var(--label-2)">五维评分</div>';
+    DIM_NAMES.forEach(n=>{ h+=L(n,(r.dims||{})[n]==null?NA:(r.dims||{})[n]); });
+    h+=L('综合分',r.overall_score==null?'—':'<b>'+r.overall_score+'</b>');
+    h+=L('年化波动率 / RSI',`${r.volatility==null?'—':r.volatility+'%'}　/　${r.rsi==null?'—':r.rsi}`);
+  }
+  return h;
+}
+function bindSwitch(){
+  sbody.querySelectorAll('.sw').forEach(s=>{
+    s.onclick=()=>s.classList.toggle('on');
+  });
+}
+
+/* ---------- 拖拽：1:1 跟随 + 动量投射 + 橡胶边界 ---------- */
+(function(){
+  let startY=0, startT=0, curT=0, dragging=false, lastY=0, lastTime=0, vel=0;
+
+  // 越界阻尼（橡胶缓冲）：越拉越沉，永不超过 limit
+  function rubber(over, limit){
+    return (1 - 1/((over/limit)+1)) * limit;
+  }
+  function curTranslate(){
+    const m=new DOMMatrixReadOnly(getComputedStyle(sheet).transform);
+    return m.m42||0;
+  }
+
+  function down(e){
+    if(!sheet.classList.contains('on')) return;
+    const tgt=e.target;
+    const atTop = sbody.scrollTop<=0;
+    const onGrip = tgt.closest('.sheet-grip');
+    // 只在抓手处，或内容区已滚到顶部时，才接管拖拽
+    if(!onGrip && !(atTop && tgt.closest('.sheet-body'))) return;
+    const y=(e.touches?e.touches[0]:e).clientY;
+    dragging=true;
+    startY=y; lastY=y; lastTime=performance.now(); vel=0;
+    startT=curTranslate();
+    curT=startT;
+    sheet.classList.add('dragging');
+    if(e.cancelable && e.type==='touchstart') e.preventDefault();
+  }
+  function move(e){
+    if(!dragging) return;
+    const y=(e.touches?e.touches[0]:e).clientY;
+    const now=performance.now();
+    let t=startT+(y-startY);
+    if(t<0) t=-rubber(-t, 110);            // 上边界橡胶缓冲，非硬截断
+    curT=t;
+    sheet.style.transform=`translateY(${t}px)`;
+    const dt=now-lastTime;
+    if(dt>0){ vel=(y-lastY)/dt*1000; lastY=y; lastTime=now; }
+    if(e.cancelable) e.preventDefault();
+  }
+  function up(){
+    if(!dragging) return;
+    dragging=false;
+    sheet.classList.remove('dragging');
+    const dist=curT;
+    // 动量投射（Apple 官方公式）
+    const project=(v,rate=0.998)=>(v/1000)*rate/(1-rate);
+    const projected=dist+project(vel);
+    const H=sheet.offsetHeight;
+    const threshold=Math.min(140, H*0.24);
+
+    if(projected>threshold || vel>900){
+      // 交还给 CSS 完成关闭动画，清掉 inline 残留
+      sheet.style.transition='';
+      sheet.style.transform='';
+      closeSheet();
+    }else if(projected<0){
+      // 上边界回弹：从实时位置续接新动画（可打断）
+      sheet.style.transition='transform .34s cubic-bezier(.32,.72,0,1)';
+      sheet.style.transform='translateY(0)';
+      setTimeout(()=>{ sheet.style.transition=''; sheet.style.transform=''; },360);
+    }else{
+      sheet.style.transition='transform .34s cubic-bezier(.32,.72,0,1)';
+      sheet.style.transform='translateY(0)';
+      setTimeout(()=>{ sheet.style.transition=''; sheet.style.transform=''; },360);
+    }
+  }
+  grip.addEventListener('mousedown',down);
+  sheet.addEventListener('mousedown',down);
+  addEventListener('mousemove',move,{passive:false});
+  addEventListener('mouseup',up);
+  grip.addEventListener('touchstart',down,{passive:false});
+  sheet.addEventListener('touchstart',down,{passive:false});
+  addEventListener('touchmove',move,{passive:false});
+  addEventListener('touchend',up);
+  addEventListener('touchcancel',up);
+})();
+
+/* ---------- 悬浮按钮：引导对话式配置 ---------- */
+document.getElementById('fab').onclick=()=>{
+  sbody.innerHTML=`<div class="li-t" style="font-size:21px;font-weight:680;margin-bottom:6px">改配置</div>
+    <div class="li-s" style="margin-bottom:18px">底表由你在对话中修改，看板只读展示。</div>
+    <div class="li" style="cursor:default"><div>
+      <div class="li-t">在对话里对我说</div>
+      <div class="li-s" style="line-height:2">
+        「我加了 005827，每月定投 1000，红利再投」<br>
+        「把贵州茅台的份额改成 200 股」<br>
+        「白酒基金改成现金分红」
+      </div></div></div>
+    <div class="note" style="margin-top:16px">改完运行 <code>python3 fetch_data.py</code> 即生效。零成本方案下，看板不直接写底表。</div>`;
+  sheet.style.transition=''; sheet.style.transform='';
+  mask.classList.add('on'); sheet.classList.add('on');
+  sbody.scrollTop=0;
+};
+
+boot();
+</script>
+</body>
+</html>
