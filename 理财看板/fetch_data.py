@@ -1228,15 +1228,22 @@ DIVPROJ_YEARS = 30
 
 # ---------------------------------------------------------------- 三情景假设
 # 【口径 —— 2026-09-16 起改为数据驱动，此前是三档写死的整数（-2% / 6% / 14%）】
+# 【2026-09-18 再调：差价倍率由 1σ 改为 0.2σ，用户拍板，理由见下】
 # 三档年化回报由【每只基金自身的历史】推导，不再全站统一：
 #     中性     = 该基金历史实现年化总回报（累计净值口径，含分红，避免除息造成的假跌幅）
 #     σ        = 年化波动率（日对数收益的总体标准差 × √252，同一口径）
-#     悲观/乐观 = 中性 ∓ σ × √(1/投影年数 + 1/历史年数)
+#     悲观/乐观 = 中性 ∓ K × σ × √(1/投影年数 + 1/历史年数)
 #                两项分别是「投影均值自身的抽样波动」与「历史均值的估计误差」。
-# ⚠️ 这个公式是【本看板自定的口径】，不是统计推断的最优解；样本越短越不可靠
-#    （024564 只有 1.1 年历史）。所有中间量都会随数据下发并在页面上标注，便于复核。
+# ⚠️ 为什么把 K 从 1.0 降到 0.2：这批基金的历史只有 1.1~2.4 年，
+#    σ/√历史年数（历史均值的估计误差）高达 8.9~11.4pp，占了总差价的 92~96%，
+#    于是 1σ 档位跑出「悲观 -2.54% / 乐观 +15.92%」这种跨度过大、没法当规划输入用的区间。
+#    实测 K=1.0 → 差价 ±9.2~11.6pp；K=0.2 → ±1.8~2.3pp。
+# ⚠️ K=0.2σ 意味着这【不再是 1σ 置信区间】，只是「围绕历史均值的窄幅情景带」；
+#    它是【本看板自定的口径】，不是统计推断的最优解，样本越短越不可靠。
+#    所有中间量（含 spread_k）都会随数据下发并在页面上标注，便于复核。
 SCEN_LABELS = ("悲观", "中性", "乐观")
 MIN_SCEN_DAYS = 180          # 少于此交易日数就不推导，宁可不出预测也不编造
+SCEN_SPREAD_K = 0.2          # 差价倍率（σ 的倍数）—— 改这里就改了三档的宽窄
 
 
 def derive_scenario_rates(nav_series, acc_series, years=DIVPROJ_YEARS):
@@ -1258,17 +1265,19 @@ def derive_scenario_rates(nav_series, acc_series, years=DIVPROJ_YEARS):
     n_years = n_days / 252.0
     mu = (1 + statistics.mean(rets)) ** 252 - 1
     sigma = statistics.pstdev(rets) * math.sqrt(252)
-    spread = sigma * math.sqrt(1.0 / years + 1.0 / n_years)
+    spread = SCEN_SPREAD_K * sigma * math.sqrt(1.0 / years + 1.0 / n_years)
     rates = {"悲观": round(mu - spread, 4), "中性": round(mu, 4), "乐观": round(mu + spread, 4)}
     meta = {"usable": True, "basis": "累计净值" if use_acc else "单位净值",
             "sample_days": n_days, "history_years": round(n_years, 2),
             "start": src[0].get("date"), "end": src[-1].get("date"),
             "realized_annual": round(mu, 4), "volatility_annual": round(sigma, 4),
-            "spread": round(spread, 4), "project_years": years,
-            "formula": "悲观/乐观 = 中性 ∓ σ×√(1/投影年数 + 1/历史年数)",
+            "spread": round(spread, 4), "spread_k": SCEN_SPREAD_K, "project_years": years,
+            "formula": "悲观/乐观 = 中性 ∓ %sσ×√(1/投影年数 + 1/历史年数)" % SCEN_SPREAD_K,
             "note": ("中性为该基金历史实现年化总回报；σ 为年化波动率；两者均由%s日序列算出，"
-                     "样本 %d 个交易日（约 %.2f 年）。公式为本看板自定口径，非统计推断最优解，"
-                     "样本越长越可靠。" % ("累计净值" if use_acc else "单位净值", n_days, n_years))}
+                     "样本 %d 个交易日（约 %.2f 年）。差价倍率 %sσ（已不是 1σ 置信区间，"
+                     "因样本短、1σ 区间过宽而收窄），为本看板自定口径，非统计推断最优解，"
+                     "样本越长越可靠。"
+                     % ("累计净值" if use_acc else "单位净值", n_days, n_years, SCEN_SPREAD_K))}
     return rates, meta
 
 
@@ -1309,7 +1318,7 @@ def annual_dividend_yield(dividends, nav):
             "yield": round(annual_ps / nav, 4)}
 
 
-def project_dividends(shares0, nav0, weekly, y, rate, years=None, weeks_per_year=52):
+def project_dividends(shares0, nav0, weekly, y, rate, years=None, weeks_per_year=52, nav_growth=True):
     """按【周】推演未来每年可得分红（毛额，红利再投前）。
 
     【为什么不能拿既有的 r 直接当净值增速】
@@ -1341,13 +1350,20 @@ def project_dividends(shares0, nav0, weekly, y, rate, years=None, weeks_per_year
 
     y 由 annual_dividend_yield() 从公开分红全历史推算；
     定投额直接取计划里的每周金额（不再折成月），年投入 = 周金额 × 52。
+
+    【nav_growth=False —— 纯现金流口径（用户 2026-09-18 要求）】
+    净值固定在当前值（g_w = 0），不掺任何净值涨跌，于是：
+        每周分红 = 份额 × nav0 × y_w     ← 每份分红额 = nav0 × y_w，恒定
+        份额    += 份额 × y_w + 周定投额 / nav0
+        → 年末份额 × nav0 ≡ 期初市值 + 累计投入 + 累计分红   （恒等，因为所有新份额都按 nav0 买入）
+    此时 rate 参数不参与计算，三档情景结果完全相同——表格只用中性那一份。
     """
     years = years or DIVPROJ_YEARS
     wpy = int(weeks_per_year)
     weekly = float(weekly)
     r_w = (1 + rate / 12) ** (12.0 / wpy) - 1
     y_w = (1 + y) ** (1.0 / wpy) - 1
-    g_w = (1 + r_w) / (1 + y_w) - 1
+    g_w = ((1 + r_w) / (1 + y_w) - 1) if nav_growth else 0.0
     shares, nav = float(shares0), float(nav0)
     rows, cum = [], 0.0
     for yr in range(1, years + 1):
@@ -1382,17 +1398,20 @@ def build_dividend_projection(shares0, nav0, dca, dividends, years=None, rates=N
     if not dy or not dy.get("yield"):
         return {}
     years = years or DIVPROJ_YEARS
-    scen = {label: project_dividends(shares0, nav0, weekly, dy["yield"], rates[label], years)
+    # 【纯现金流口径】净值固定不涨跌 → 三档结果完全相同，表格只用中性那一份；
+    # 三档年化只服务于「持仓金额」那张图（数据来自 project_longterm 的 projection）。
+    scen = {label: project_dividends(shares0, nav0, weekly, dy["yield"], rates[label], years,
+                                     nav_growth=False)
             for label in SCEN_LABELS if rates.get(label) is not None}
-    # 把「每份分红额随净值增长」这个隐含假设显式写出来（用中性情景的头尾每份分红额表述）
+    # 把「每份分红额固定」这个口径显式写出来
     mid_yr = ((scen.get("中性") or {}).get("yearly") or [])
     ps_note, ps_mult = "", None
-    if len(mid_yr) >= 2 and mid_yr[0].get("per_share"):
-        ps_mult = round(mid_yr[-1]["per_share"] / mid_yr[0]["per_share"], 2)
-        ps_note = ("　⚠️ 本口径等价于假设【每份分红额随净值同比例增长】："
-                   "每份年分红由 %.4f 元升至第 %d 年的 %.4f 元（%.2f 倍）。"
-                   "基金实际宣告的是每份固定金额（如 0.011 元），所以这是一个稳态假设，不是事实。"
-                   % (mid_yr[0]["per_share"], mid_yr[-1]["year"], mid_yr[-1]["per_share"], ps_mult))
+    if mid_yr and mid_yr[0].get("per_share"):
+        ps_mult = 1.0
+        ps_note = ("　本表为【纯现金流口径】：净值固定为当前值、不涨跌，"
+                   "每份分红额固定为「当前净值 × 股息率」= %.4f 元/年（不再假设它随净值增长）。"
+                   "因此表中资产恒等于「期初市值 + 累计投入 + 累计分红」，不含任何净值收益；"
+                   "分红为毛额（再投前），未计申赎费与税费。" % mid_yr[0]["per_share"])
     return {
         "years": years,
         "assumptions": {
@@ -1401,6 +1420,7 @@ def build_dividend_projection(shares0, nav0, dca, dividends, years=None, rates=N
             "rates": {k: rates.get(k) for k in SCEN_LABELS},
             "rate_meta": rate_meta or {},
             "reinvest": True,
+            "nav_growth": False,
             "weekly": round(weekly, 2),
             "weeks_per_year": 52,
             "annual_contrib": round(weekly * 52, 2),
@@ -1408,10 +1428,8 @@ def build_dividend_projection(shares0, nav0, dca, dividends, years=None, rates=N
             "per_share_last": (mid_yr[-1].get("per_share") if mid_yr else None),
             "per_share_multiple": ps_mult,
             "note": ("按每周 ¥%.2f 的定投计划推演，红利全部再投；金额为毛额（红利再投前）。"
-                     "分红率由公开分红全历史推算（平均每份 × 年派发频次 ÷ 当前净值）。"
-                     "三情景年化回报由本基金自身历史推导，见上方标注（非全站统一假定值）；"
-                     "其中 r 为【总回报】，净值增速已扣除分红部分，两者不重复计算；"
-                     "未计申赎费、税费，不含净值波动之外的任何择时。%s" % (weekly, ps_note)),
+                     "分红率由公开分红全历史推算（平均每份 × 年派发频次 ÷ 当前净值）。%s"
+                     % (weekly, ps_note)),
         },
         "scenarios": scen,
     }
@@ -1653,7 +1671,10 @@ def main():
             if not scen_rates:
                 WARNINGS.append("%s %s 未生成长期预测：%s"
                                 % (code, rec.get("name") or "", (scen_meta or {}).get("reason")))
+            # 图上的「预计持仓金额」曲线与推演表对齐，都是未来 30 年（原为函数默认的 10 年，
+            # 用户 2026-09-18 要求改 30 年；三档差价收窄到 0.2σ 后，30 年也不会把纵轴撑废）
             rec["projection"] = project_longterm(d, f.get("dividends") or [],
+                                                 years=DIVPROJ_YEARS,
                                                  since=open_date, rates=scen_rates,
                                                  rate_meta=scen_meta)
             # 年度分红推演（未来 30 年）。只进 detail，不进 positions.json，

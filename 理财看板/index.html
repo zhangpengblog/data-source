@@ -65,16 +65,23 @@ body{
   font-size:17px;line-height:1.47;letter-spacing:-.022em;
   color:var(--label);min-height:100vh;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* 兜底色交给画布（body 背景会传递给画布，铺满整个滚动区），
+     色晕见下方固定图层 */
+  background:var(--gray6);
+  overflow-x:hidden;
+}
+/* 色晕与噪点用 position:fixed 的图层承载，而不是 background-attachment:fixed ——
+   后者在移动端不可靠：只在首屏那一屏绘制，滚动后露出未绘制的画布
+   （手机系统深色时画布是黑的 → 下半屏就是一整块黑）。
+   固定图层在所有移动端都稳定，视觉与原来一致。 */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-2;
   background:
     radial-gradient(120% 90% at 8% 0%, rgba(0,122,255,.16), transparent 58%),
     radial-gradient(110% 85% at 96% 4%, rgba(175,82,222,.14), transparent 56%),
     radial-gradient(120% 100% at 50% 100%, rgba(52,199,89,.10), transparent 62%),
-    var(--gray6);
-  background-attachment:fixed;
-  overflow-x:hidden;
-}
+    var(--gray6)}
 /* 毛玻璃需要背后有内容才可见，这里再加一层极浅噪点避免色带 */
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
   background-image:radial-gradient(rgba(0,0,0,.014) 1px, transparent 1px);
   background-size:3px 3px;opacity:.7}
 
@@ -82,14 +89,17 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* ================= 顶栏：毛玻璃 + 逐层吸附 ================= */
 .topbar{
-  position:sticky;top:0;z-index:60;margin:0 -20px 20px;
-  padding:12px 20px;
+  /* 顶栏是 body 的直接子元素（与 .shell 同级），本身即通栏；
+     不要用负外边距去"抵消"内边距——那会把元素撑出视口造成横向溢出 */
+  position:sticky;top:0;z-index:60;margin:0 0 20px;
+  padding:12px 0;
   background:var(--mat-bg);
   -webkit-backdrop-filter:saturate(180%) blur(24px);
   backdrop-filter:saturate(180%) blur(24px);
   border-bottom:.5px solid var(--mat-border);
 }
-.topbar-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;
+/* 内边距放在这里，才能与 .shell 的内容区左右边界严格对齐 */
+.topbar-in{max-width:1180px;margin:0 auto;padding:0 20px;display:flex;align-items:center;
   justify-content:space-between;gap:16px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:11px;min-width:0}
 .brand-mark{width:34px;height:34px;border-radius:9px;flex:none;
@@ -107,7 +117,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 /* 数据超过 20 小时未刷新：整体转为橙色告警态 */
 .stamp.stale{color:#c93400}
 .stamp.stale .dot{background:#ff9f0a;box-shadow:0 0 0 3px rgba(255,159,10,.22)}
-@media (max-width:560px){.stamp{white-space:normal;text-align:right}}
+/* 窄屏：顶栏换行后时间胶囊独占一行，用 margin-left:auto 靠右收边；
+   仅靠 text-align:right 移不动 flex 胶囊，会在右侧留出大片空白 */
+@media (max-width:560px){.stamp{white-space:normal;text-align:right;margin-left:auto}}
 
 /* ================= 分段控件（iOS Segmented Control + 滑块） ================= */
 .seg{position:relative;display:flex;gap:2px;padding:2px;margin-bottom:22px;
@@ -127,7 +139,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   transition:color .22s ease,transform .16s cubic-bezier(.32,.72,0,1)}
 @media (max-width:560px){
   .shell{padding:16px 14px 56px}
-  .topbar{margin:0 -14px 16px;padding:10px 14px}
+  .topbar{margin:0 0 16px;padding:10px 0}
+  .topbar-in{padding:0 14px}
   .brand h1{font-size:17px}
   .brand p{font-size:11px}
   .seg button{min-width:0;font-size:12.5px;padding:8px 9px}
@@ -249,6 +262,31 @@ tbody tr{transition:background .18s ease}
 .mini b{font-size:15px;font-weight:620;letter-spacing:-.014em;
   font-variant-numeric:tabular-nums}
 .mini b.na{font-size:12px;font-weight:400}
+/* 卡片内「窄列」里的 6 格指标（定投计划与累计份额）：固定 5 列时每格只剩 ~66px，
+   数值被迫换行、整块看起来像被挤扁 —— 改成容器感知的 auto-fit。
+   6 格在 2 列 / 3 列下都能排满，不会出现孤格。 */
+.mini.dca{grid-template-columns:repeat(auto-fit,minmax(106px,1fr))}
+
+/* ================= 基金卡片：默认折叠（只留标题 + KPI 磁贴） ================= */
+/* 折叠用 grid-template-rows:0fr→1fr，而不是 display:none：
+   折叠时内容仍参与布局、只是被裁掉，图表 DOM 一直有正常宽高，
+   echarts.init 不会拿到 0×0，展开时也就不会画歪（无需重画或 resize）。 */
+.pos-body{display:grid;grid-template-rows:0fr;
+  transition:grid-template-rows .46s cubic-bezier(.32,.72,0,1)}
+.pos-body>.pbi{overflow:hidden;min-height:0}
+.pos.open .pos-body{grid-template-rows:1fr}
+.pos-more{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;margin-top:12px;padding:11px 13px;border:0;cursor:pointer;
+  font:inherit;font-size:13px;font-weight:590;letter-spacing:-.01em;color:var(--blue);
+  background:rgba(120,120,128,.09);border-radius:12px;text-align:left;
+  transition:background .2s ease,transform .16s cubic-bezier(.32,.72,0,1)}
+.pos-more:active{transform:scale(.988)}
+.pos-more:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.pos-more .pm-c{flex:none;transition:transform .46s cubic-bezier(.32,.72,0,1)}
+.pos.open .pos-more .pm-c{transform:rotate(180deg)}
+.pos-more .pm-close{display:none}
+.pos.open .pos-more .pm-close{display:inline}
+.pos.open .pos-more .pm-open{display:none}
 
 /* 场外基金 · 分红面板 */
 .div-panel{margin-top:14px;border-radius:14px;overflow:hidden;
@@ -280,8 +318,10 @@ tbody tr{transition:background .18s ease}
 }
 .div-kpis .u{font-size:11px;font-weight:500;color:var(--label-3);margin-left:2px}
 
-/* 年度分红推演：30 行紧凑表格（表格默认 padding 12px 太高，30 行会拖得很长） */
-.div-proj .sc{max-height:340px;overflow-y:auto;padding:0 14px 8px;
+/* 年度分红推演：30 行紧凑表格（表格默认 padding 12px 太高，30 行会拖得很长）。
+   overflow 用 auto（不只是 overflow-y）——5 列在窄屏可能超出，让它自己横向滚动，
+   绝不能让表格把文档撑宽（body 的 overflow-x:hidden 在手机上兜不住）。 */
+.div-proj .sc{max-height:340px;overflow:auto;padding:0 14px 8px;
   -webkit-overflow-scrolling:touch}
 .div-proj table{font-size:12.5px}
 .div-proj th{padding:0 9px 7px;font-size:11px}
@@ -291,6 +331,15 @@ tbody tr{transition:background .18s ease}
 /* .more 原本只在 .div-list .more 里定义过，不在那个容器内就用不上样式、
    会继承正文字号（17px）显得很大 —— 这里显式给推演面板的脚注定小号 */
 .div-proj .more{padding:10px 14px 12px;font-size:11px;line-height:1.62;color:var(--label-3)}
+/* 窄屏：5 列表格要塞进 ~290px，收字号与内边距。
+   ⚠️ 这个媒体块必须写在 .div-proj 基础规则【之后】—— @media 不加权重，
+   写在前面会被同权重的后置规则覆盖成死代码（本文件上部那个 560px 媒体块就是这么废掉的）。 */
+@media (max-width:560px){
+  .div-proj table{font-size:11.5px}
+  .div-proj th{padding:0 4px 6px;font-size:11px}
+  .div-proj td{padding:6px 4px}
+  .div-proj .sc{padding:0 6px 6px}
+}
 .div-list{padding:4px 0 2px}
 .div-list .row{display:grid;grid-template-columns:86px 1fr auto;gap:10px;
   align-items:center;padding:7px 14px;font-size:12px;
@@ -429,6 +478,9 @@ footer{margin-top:30px;padding-top:18px;border-top:.5px solid var(--sep);
   font-size:12px;color:var(--label-3);line-height:1.7;letter-spacing:-.004em}
 footer .ok{color:var(--green);font-weight:520}
 footer .bad{color:var(--orange);font-weight:520}
+/* 告警文本里含超长 URL（连续无断行机会）→ 整行会撑出视口，把文档撑宽、手机端右边露出空白。
+   anywhere 生效前先给 break-word 兜底（老 WebKit / iOS<15.4 不认 anywhere）。 */
+#warn-box,footer,.note{overflow-wrap:break-word;overflow-wrap:anywhere}
 
 .loading{padding:60px 20px;text-align:center;color:var(--label-2);font-size:15px}
 .spin{width:26px;height:26px;margin:0 auto 14px;border-radius:50%;
@@ -446,6 +498,8 @@ footer .bad{color:var(--orange);font-weight:520}
   :root{--mat-bg:#fff;--mat-card:#fff;--mat-raised:#fff;--mat-border:rgba(60,60,67,.2)}
   .card,.pos,.topbar,.sheet{-webkit-backdrop-filter:none;backdrop-filter:none}
   body{background:var(--gray6)}
+  /* 色晕已移到固定图层，这里一并平面化，保持「无渐变」的原始意图 */
+  body::before{background:var(--gray6)}
 }
 @media (prefers-contrast:more){
   :root{--label-2:rgba(60,60,67,.86);--label-3:rgba(60,60,67,.6);
@@ -506,7 +560,9 @@ footer .bad{color:var(--orange);font-weight:520}
     <div class="grid g4" style="margin-bottom:16px" id="fund-kpi"></div>
     <div id="fund-list"></div>
     <div class="note">定投累计份额按 <code>dca_plan.csv</code> 的计划参数与历史净值逐期回算；分红复投按 <code>dividend_policy.csv</code> 策略处理。<br>
-    长期预测为三情景复利推演，<b>三档年化回报由每只基金自身历史推导</b>（中性 = 该基金历史实现年化总回报，悲观/乐观 = 中性 ∓ σ×√(1/投影年数 + 1/历史年数)），<b>每只基金各不相同，已标在图例上</b>；该公式为本看板<b>自定口径</b>，样本越短越不可靠，<b>仅为模型推演，不构成投资建议</b>。<br>
+    长期预测为三情景复利推演，<b>三档年化回报由每只基金自身历史推导</b>（中性 = 该基金历史实现年化总回报，
+    悲观/乐观 = 中性 ∓ K×σ×√(1/投影年数 + 1/历史年数)，K 为收窄倍率、因样本仅 1~2 年而取得较小，
+    <b>具体倍率与样本长度见图上标注</b>），<b>每只基金各不相同，已标在图例上</b>；该公式为本看板<b>自定口径</b>，样本越短越不可靠，<b>仅为模型推演，不构成投资建议</b>。<br>
     场外基金评分仅含基本面（阶段收益口径）与技术面（净值走势口径）；<b>量价配合、资金面、信息面对场外基金不适用或暂无数据</b>，页面不做编造。</div>
   </div>
 
@@ -560,6 +616,8 @@ footer .bad{color:var(--orange);font-weight:520}
 const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const fmtMoney = v => v==null ? NA : Number(v).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+/* 整数元金额（带千分位、不带小数）：年度推演表里的金额用，避免 ¥631,394.83 这种噪音 */
+const fmtYuan  = v => v==null ? NA : Math.round(Number(v)).toLocaleString('zh-CN');
 const fmtNum   = (v,d=2) => v==null ? NA : Number(v).toFixed(d);
 const fmtPct   = v => v==null ? NA : (v>0?'+':'')+Number(v).toFixed(2)+'%';
 const cls      = v => v==null ? 'flat' : (v>0?'up':(v<0?'down':'flat'));
@@ -657,6 +715,26 @@ seg.querySelectorAll('button').forEach(b=>{
 seg.addEventListener('scroll',()=>{
   const on=seg.querySelector('button.on'); if(on) moveThumb(on,false);
 }, {passive:true});
+
+/* ---------- 基金卡片：默认折叠，只留标题 + KPI 磁贴 ---------- */
+/* 展开状态按基金代码记住：主题切换会整页重渲染，别把用户展开的卡片又收回去。 */
+const openFunds=new Set();
+document.getElementById('fund-list').addEventListener('click',e=>{
+  const btn=e.target.closest('.pos-more'); if(!btn) return;
+  const card=btn.closest('.pos'); if(!card) return;
+  const open=card.classList.toggle('open');
+  btn.setAttribute('aria-expanded', open?'true':'false');
+  const code=card.dataset.code;
+  if(code) open?openFunds.add(code):openFunds.delete(code);
+  /* 折叠靠 grid-template-rows，图表 DOM 一直有正常宽高，通常无需 resize；
+     展开瞬间卡片高度由 0 变满，补一次 resize 兜底（切标签页时也有同样的兜底）。 */
+  const fix=()=>{ if(!window.echarts) return;
+    card.querySelectorAll('.chart').forEach(el=>{
+      const c=echarts.getInstanceByDom(el); if(c) c.resize();
+    }); };
+  requestAnimationFrame(fix);
+  setTimeout(fix,520);
+});
 
 /* ---------- 数据加载 ---------- */
 async function boot(){
@@ -846,23 +924,23 @@ function fundDividendPanel(r, dv, idx){
 
 /* 年度分红推演：按定投计划推演未来 N 年「每年可得分红」（毛额，红利再投前）
    数据全部由 fetch_data.py 的 build_dividend_projection() 预先算好，
-   页面只负责渲染 —— 保持「数据与页面分离」。没有定投计划时后端返回 {}，这里不渲染。 */
-function fundDivProjPanel(r, dp, idx){
+   页面只负责渲染 —— 保持「数据与页面分离」。没有定投计划时后端返回 {}，这里不渲染。
+   呈现（2026-09-18 精简）：5 个 KPI → 3 个、三段口径说明 → 一段、表格 7 列 → 4 列（只给中性一档）：
+   年份 / 当年预计分红 / 年末预计资产 / 累计分红，其中年末预计资产 = 年末份额 × 当年净值（前端相乘）。
+   面板里只留**一张图**：三档年化下的「预计持仓金额」曲线（数据来自 `projection`）+ 累计投入参考线；
+   原「年度分红曲线」图已按用户要求换成持仓金额（分红明细看表）。 */
+function fundDivProjPanel(r, dp, idx, hasProj){
   if(!dp || !dp.scenarios) return '';
   const t=axisTheme(), a=dp.assumptions||{}, scen=dp.scenarios;
   const mid=scen['中性']||{}, rows=mid.yearly||[];
   if(!rows.length) return '';
   const years=dp.years||rows.length;
   const basis=a.dividend_basis||{};
-  const rm=a.rate_meta||{};
-  const rmap=a.rates||{};
-  const rTxt=['悲观','中性','乐观'].filter(k=>rmap[k]!=null)
-    .map(k=>`${k} <b>${fmtNum(rmap[k]*100,2)}%</b>`).join('　/　');
   const last=rows[rows.length-1];
-  const pick=lab=>{ const y=(scen[lab]||{}).yearly||[]; return y; };
-  const yB=pick('悲观'), yZ=pick('中性'), yO=pick('乐观');
-  /* 表格表头用曲线的颜色，跟上面的图对上（悲观绿 / 中性蓝 / 乐观红） */
-  const cB=t.pal[3], cZ=t.pal[0], cO=t.pal[4];
+  /* 表格里「当年预计分红」用中性曲线的颜色，跟上面的图对上 */
+  const cZ=t.pal[0];
+  /* 图是「持仓金额」曲线（数据来自 projection，年限与分红推演的 30 年不同，见图上说明） */
+  const projYrs=(((DETAIL[r.code]||{}).projection)||{}).years||10;
 
   let h=`<div class="div-panel div-proj">
     <div class="div-head">
@@ -873,43 +951,32 @@ function fundDivProjPanel(r, dp, idx){
     <div class="div-kpis">
       <div><label>推演分红率</label><b>${fmtNum((a.dividend_yield||0)*100,2)}<span class="u">%</span></b></div>
       <div><label>周定投</label><b>¥ ${fmtMoney(a.weekly)}</b></div>
-      <div><label>${years}年累计投入</label><b>¥ ${fmtMoney(mid.cum_contrib)}</b></div>
-      <div><label>第 ${years} 年当年分红</label><b class="hl">¥ ${fmtMoney(last.dividend)}</b></div>
       <div><label>${years}年累计分红</label><b class="hl">¥ ${fmtMoney(last.cum_dividend)}</b></div>
     </div>
-    <div class="lead">按<b>每周 ¥${fmtMoney(a.weekly)}</b>（年投 ¥${fmtMoney(a.annual_contrib)}）的定投计划持续投入 ${years} 年，
-      且<b>红利全部再投</b>；金额为<b>毛额</b>（再投前的分红）。
-      分红率由公开分红全历史推算：平均每份 ${fmtNum(basis.avg_per_share,4)} 元 × 约 ${fmtNum(basis.per_year,2)} 次/年 ÷ 当前净值。</div>
-    <div class="lead" style="padding-top:4px">三档年化回报 ${rTxt}，
-      <b>由本基金自身历史推导</b>：样本 ${fmtNum(rm.history_years,2)} 年（${rm.basis||'—'}，${rm.sample_days||0} 个交易日），
-      实现年化 <b>${fmtNum((rm.realized_annual||0)*100,2)}%</b>、年化波动 σ <b>${fmtNum((rm.volatility_annual||0)*100,2)}%</b>；
-      悲观/乐观 = 中性 ∓ σ×√(1/${years} + 1/历史年数)。
-      <b>该公式是本看板自定口径，且样本越短越不可靠，仅作推演。</b></div>
-    <div class="lead" style="padding-top:4px">分红按<b>股息率</b>推：金额 = 份额 × 每份分红额，而每份分红额 = 净值 × ${fmtNum((a.dividend_yield||0)*100,2)}%。
-      所以本口径<b>等价于假设「每份分红额随净值同比例增长」</b>${a.per_share_multiple?`：表中「每份年分红」由 <b>${fmtNum(a.per_share_first,4)} 元</b> 升至第 ${years} 年的 <b>${fmtNum(a.per_share_last,4)} 元（${a.per_share_multiple} 倍）</b>`:''}。
-      基金实际宣告的是每份固定金额（如 0.011 元），<b>这是一个稳态假设，不是事实</b>；表中已把每份分红额逐年列出供你核对。</div>
-    <div style="padding:6px 14px 0"><div class="chart sm" id="divp-${idx}"></div></div>
+    <div class="lead">按每周 ¥${fmtMoney(a.weekly)}（年投 ¥${fmtMoney(a.annual_contrib)}）定投 ${years} 年、红利全部再投，金额为<b>毛额</b>（再投前）。
+      <b>本表为纯现金流口径：净值按当前值固定、不计涨跌</b>，每份分红额固定为「当前净值 × 股息率 ${fmtNum((a.dividend_yield||0)*100,2)}%」= ${fmtNum(a.per_share_first,4)} 元/年
+      （股息率由公开分红全历史推算：平均每份 ${fmtNum(basis.avg_per_share,4)} 元 × 约 ${fmtNum(basis.per_year,2)} 次/年 ÷ 当前净值）。
+      所以 <b>年末预计资产 = 期初市值 + 累计投入 + 累计分红</b>，<b>不含任何净值收益</b>；未计申赎费与税费，仅作推演，不构成投资建议。</div>
+    ${hasProj?`<div class="more" style="padding:11px 14px 0">曲线为三档年化下的<b>预计持仓金额</b>（自当前持仓金额起算，含每周定额投入与红利再投，未来 ${projYrs} 年）——<b>含净值涨跌，与下表口径不同</b>；灰色虚线为同期<b>累计投入</b>。</div>
+    <div style="padding:4px 14px 0"><div class="chart sm" id="divp-${idx}"></div></div>`:''}
     <div class="sc"><table>
-      <thead><tr><th>年份</th><th>年末份额</th>
-        <th>每份年分红<br><span style="font-weight:400">(中性)</span></th>
-        <th style="color:${cB}">悲观</th><th style="color:${cZ}">中性</th><th style="color:${cO}">乐观</th>
-        <th>累计分红<br><span style="font-weight:400">(中性)</span></th></tr></thead>
+      <thead><tr><th>年份</th><th>累计<br>投入</th><th>当年<br>预计分红</th><th>累计<br>分红</th><th>年末<br>预计资产</th></tr></thead>
       <tbody>`;
+  const annual=parseFloat(a.annual_contrib)||0;
   rows.forEach(x=>{
-    const i=x.year-1;
-    const b=yB[i]||{}, o=yO[i]||{};
+    /* 纯现金流口径（后端 nav_growth=False，净值固定不涨跌）：
+       累计投入 = 年投 × 年数；年末预计资产 = 年末份额 × 净值 = 期初市值 + 累计投入 + 累计分红，不含净值收益 */
+    const invested=annual*x.year;
+    const mv=(parseFloat(x.shares)||0)*(parseFloat(x.nav)||0);
     h+=`<tr>
       <td style="text-align:left">第 ${x.year} 年</td>
-      <td>${fmtNum(x.shares,0)}</td>
-      <td>${fmtNum(x.per_share,4)}</td>
-      <td style="color:${cB}">${fmtNum(b.dividend,0)}</td>
-      <td style="font-weight:560;color:${cZ}">${fmtNum(x.dividend,0)}</td>
-      <td style="color:${cO}">${fmtNum(o.dividend,0)}</td>
-      <td>${fmtNum(x.cum_dividend,0)}</td>
+      <td>¥ ${fmtYuan(invested)}</td>
+      <td style="font-weight:560;color:${cZ}">¥ ${fmtYuan(x.dividend)}</td>
+      <td>¥ ${fmtYuan(x.cum_dividend)}</td>
+      <td>¥ ${fmtYuan(mv)}</td>
     </tr>`;
   });
   h+=`</tbody></table></div>
-    <div class="more" style="padding:9px 14px 11px">${a.note||''}</div>
   </div>`;
   return h;
 }
@@ -1038,16 +1105,16 @@ function renderFunds(){
   let html='';
   funds.forEach((r,idx)=>{
     const d=r.dca||{},dv=r.dividend||{};
-    /* 这两栏是「有则显示」：
-       - 没定投计划（dca_plan.csv 里没有该代码）→ 不渲染「定投计划与累计份额」，
-         净值走势图顺势通栏，卡片高度跟着收短；
-       - 没有预测数据（projection.scenarios 为空）→ 不渲染投影图的容器。
-         否则会留下一个 250px 高的空壳（.chart.sm 是固定高度），把卡片无谓地撑高。 */
+    /* 「定投计划与累计份额」有则显示：没定投计划（dca_plan.csv 里没有该代码）就不渲染，
+       净值走势图顺势通栏，卡片高度跟着收短。
+       推演面板里的「持仓金额」图要 projection 数据才画得出来，否则会留个 250px 空壳（.chart.sm 是固定高度）。
+       卡片默认折叠：磁贴以下（净值曲线 → 待确认份额 → 分红记录 → 年度分红推演）都放在 .pos-body 里，
+       展开状态记在 openFunds（按基金代码），整页重渲染后不丢。 */
     const hasDca  = !!(d.plan || d.periods!=null);
     const hasProj = !!(((DETAIL[r.code]||{}).projection||{}).scenarios);
     /* 年度分红推演：后端只在「有定投计划且算得出分红率」时产出，这里拿到就渲染 */
     const divProj = (DETAIL[r.code]||{}).dividend_projection;
-    html+=`<div class="pos">
+    html+=`<div class="pos${openFunds.has(r.code)?' open':''}" data-code="${r.code}">
       <div class="pos-head">
         <div>
           <div class="pos-title">${r.name||''} <em>${r.code}</em> ${badge(r.type)}</div>
@@ -1070,11 +1137,17 @@ function renderFunds(){
         <div><label>近1月 / 近3月</label><b class="${cls(r.syl_1y)}">${fmtPct(r.syl_1y)}</b></div>
         <div><label>近6月 / 近1年</label><b class="${cls(r.syl_1n)}">${fmtPct(r.syl_1n)}</b></div>
       </div>
+      <button class="pos-more" type="button" aria-expanded="${openFunds.has(r.code)}" aria-controls="fundb-${idx}">
+        <span class="pm-open">展开净值曲线与明细</span>
+        <span class="pm-close">收起详情</span>
+        <svg class="pm-c" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6.3 8 10.3l4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="pos-body" id="fundb-${idx}"><div class="pbi">
       ${hasDca ? `
       <div class="grid" style="grid-template-columns:minmax(290px,1fr) minmax(400px,1.65fr);margin-top:14px">
         <div>
           <h3 style="font-size:13px;color:var(--label-2);font-weight:590;margin-bottom:9px">定投计划与累计份额</h3>
-          <div class="mini">
+          <div class="mini dca">
             <div><label>计划</label><b>${d.plan?`${d.plan.frequency}投 ¥${d.plan.amount}`:NA}</b></div>
             <div><label>已投期数</label><b>${d.periods==null?NA:d.periods+' 期'}</b></div>
             <div><label>累计投入</label><b>${fmtMoney(d.invested)}</b></div>
@@ -1088,8 +1161,8 @@ function renderFunds(){
       <div style="margin-top:14px"><div class="chart sm" id="nav-${idx}"></div></div>`}
       ${fundPendingPanel(r, d, dv, idx)}
       ${fundDividendPanel(r, dv, idx)}
-      ${fundDivProjPanel(r, divProj, idx)}
-      ${hasProj ? `<div style="margin-top:14px"><div class="chart sm" id="proj-${idx}"></div></div>` : ''}
+      ${fundDivProjPanel(r, divProj, idx, hasProj)}
+      </div></div>
     </div>`;
   });
   document.getElementById('fund-list').innerHTML=html;
@@ -1108,15 +1181,20 @@ function renderFunds(){
         areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[
           {offset:0,color:'rgba(0,122,255,.26)'},{offset:1,color:'rgba(0,122,255,0)'}])}}]
     });
-    const pj=s.projection||{};
-    if(pj.scenarios){
+    /* 图表：三档年化下的「预计持仓金额」曲线（悲观绿 / 中性蓝 / 乐观红）+ 一条「累计投入」参考线。
+       数据用后端的 projection（10 年、自当前持仓金额起算、含每周定额投入与红利再投），
+       让「一共投了多少」与「持仓值多少」同图对比；逐年分红明细见下方推演表的「当年预计分红」列。
+       ⚠️ 不用 30 年推演表那份 shares×nav 画这张图：乐观档 30 年会到千万级，纵轴会被撑废。 */
+    const dpj=s.dividend_projection||{}, pj=s.projection||{};
+    if(dpj.scenarios && pj.scenarios){
       const yrs=pj.years||10, weekly=pj.weekly||0;
       const x=Array.from({length:yrs+1},(_,i)=>'第 '+i+' 年');
       const start=(s.dca||{}).value||0, inv0=(s.dca||{}).invested||0;
-      /* 三档年化回报由后端按【该基金自身历史】推导后随数据下发（pj.rates），前端不再写死。
-         这里按同一口径（周复利 + 每周投入）重建曲线形状，再按后端终值等比缩放，
-         正常情况下 scale≈1，仅作兜底。 */
       const rate=pj.rates||{};
+      const colD={'悲观':t.pal[3],'中性':t.pal[0],'乐观':t.pal[4]};
+      const styleD={'悲观':'dotted','中性':'solid','乐观':'dashed'};
+      /* 三档年化由后端按【该基金自身历史】推导后随数据下发（pj.rates），前端不写死。
+         这里按同一口径（周复利 + 每周定额投入）重建曲线形状，再按后端终值等比缩放兜底。 */
       const series=Object.entries(pj.scenarios).map(([k,final])=>{
         const rr=rate[k];
         if(rr==null) return null;
@@ -1127,39 +1205,18 @@ function renderFunds(){
           vals.push(v);
         }
         const scale=final/(vals[yrs]||1);
-        const col=k==='悲观'?t.pal[3]:(k==='中性'?t.pal[0]:t.pal[4]);
         return {name:`${k} ${(rr*100).toFixed(2)}%`,type:'line',smooth:.24,showSymbol:false,
-          /* 图例与 tooltip 的标记取色看的是 itemStyle.color，不是 lineStyle.color。
-             只设后者的话，它们会回落到 ECharts 默认调色板，
-             于是出现「线是绿的、图例却是蓝的」这种错位。两处必须写同一个色。 */
-          itemStyle:{color:col},
+          /* itemStyle.color 是图例/tooltip 标记的取色来源，必须与 lineStyle 同值。
+             只设后者的话它们会回落到 ECharts 默认调色板（线是绿的、图例却是蓝的）。 */
+          itemStyle:{color:colD[k]},
           data:vals.map(v=>+(v*scale).toFixed(2)),
-          lineStyle:{color:col,width:2.2,type:k==='中性'?'solid':(k==='乐观'?'dashed':'dotted')}};
+          lineStyle:{color:colD[k],width:2.2,type:styleD[k]}};
       }).filter(Boolean);
+      /* 累计投入 = 已投入 + 周投 × 52 × 年数（与三档曲线同一起点、同一时间轴） */
       series.push({name:'累计投入',type:'line',showSymbol:false,
         itemStyle:{color:t.label},
         data:Array.from({length:yrs+1},(_,i)=>inv0+weekly*52*i),
         lineStyle:{color:t.label,width:1.4,type:'dashed',opacity:.6}});
-      draw('proj-'+idx,{
-        tooltip:{...TIPx(),trigger:'axis',formatter:ps=>{
-          let o='<b>'+ps[0].axisValue+'</b><br/>';
-          ps.forEach(p=>o+=`${p.marker} ${p.seriesName}：¥ ${fmtBig(p.value)}<br/>`);return o;}},
-        legend:{top:0,right:0,icon:'roundRect',itemWidth:14,itemHeight:8,itemGap:16,
-          textStyle:{color:t.label,fontSize:11.5,fontFamily:'-apple-system,PingFang SC,sans-serif'}},
-        grid:{left:6,right:12,top:34,bottom:6,containLabel:true},
-        xAxis:{type:'category',data:x,...AX(0)},
-        yAxis:{type:'value',...AX(1),axisLabel:{...AX(1).axisLabel,formatter:v=>fmtBig(v)}},
-        series:series
-      });
-    }
-
-    /* 年度分红推演：三条情景线（悲观绿 / 中性蓝 / 乐观红，与表头同色） */
-    const dpj=s.dividend_projection||{};
-    if(dpj.scenarios){
-      const rowsD=((dpj.scenarios['中性']||{}).yearly)||[];
-      const colD={'悲观':t.pal[3],'中性':t.pal[0],'乐观':t.pal[4]};
-      const styleD={'悲观':'dotted','中性':'solid','乐观':'dashed'};
-      const rateD=(dpj.assumptions||{}).rates||{};
       draw('divp-'+idx,{
         tooltip:{...TIPx(),trigger:'axis',formatter:ps=>{
           let o='<b>'+ps[0].axisValue+'</b><br/>';
@@ -1167,14 +1224,9 @@ function renderFunds(){
         legend:{top:0,right:0,icon:'roundRect',itemWidth:14,itemHeight:8,itemGap:16,
           textStyle:{color:t.label,fontSize:11.5,fontFamily:'-apple-system,PingFang SC,sans-serif'}},
         grid:{left:6,right:12,top:34,bottom:6,containLabel:true},
-        xAxis:{type:'category',data:rowsD.map(x=>'第 '+x.year+' 年'),...AX(0)},
+        xAxis:{type:'category',data:x,...AX(0)},
         yAxis:{type:'value',...AX(1),axisLabel:{...AX(1).axisLabel,formatter:v=>fmtBig(v)}},
-        series:['悲观','中性','乐观'].filter(k=>rateD[k]!=null).map(k=>({
-          name:`${k} ${(rateD[k]*100).toFixed(2)}%`,type:'line',showSymbol:false,smooth:.22,
-          /* itemStyle.color 是图例/tooltip 标记的取色来源，必须与 lineStyle 同值 */
-          itemStyle:{color:colD[k]},
-          data:(((dpj.scenarios[k]||{}).yearly)||[]).map(x=>x.dividend),
-          lineStyle:{color:colD[k],width:2.2,type:styleD[k]}}))
+        series:series
       });
     }
   });
