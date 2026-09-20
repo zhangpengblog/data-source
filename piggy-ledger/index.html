@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<title>养猪房账单 · 看板</title>
+<script>
+/* 外观引导：把 auto 解析成 light/dark，避免首屏闪白 */
+(function () {
+  try {
+    var pref = localStorage.getItem('piggy-theme') || 'auto';
+    var dark = pref === 'dark'
+      || (pref === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.documentElement.dataset.themePref = pref;
+  } catch (e) {
+    document.documentElement.dataset.theme = 'light';
+  }
+})();
+</script>
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <span class="aurora-a"></span>
+  <span class="aurora-b"></span>
+  <span class="aurora-c"></span>
+</div>
+
+<header class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">猪</span>
+      <span class="brand-text">
+        <strong>养猪房账单</strong>
+        <em id="brandSub">加载中</em>
+      </span>
+    </div>
+
+    <div class="navbar-tools">
+      <!-- 横向滚动容器：窄屏下年份放不下时可横滑，两端渐隐提示「还有更多」 -->
+      <div class="segmented-scroll" id="yearScroll">
+        <div class="segmented" id="yearSeg" role="tablist" aria-label="年份筛选">
+          <span class="segmented-pill" id="yearPill" aria-hidden="true"></span>
+        </div>
+      </div>
+      <button class="icon-btn" id="themeBtn" type="button" title="切换外观" aria-label="切换外观">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path class="ico-sun" d="M12 4.2v-2M12 21.8v-2M4.2 12h-2M21.8 12h-2M6.5 6.5 5.1 5.1M18.9 18.9l-1.4-1.4M17.5 6.5l1.4-1.4M5.1 18.9l1.4-1.4"
+                stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+          <circle class="ico-sun" cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7" fill="none"/>
+          <path class="ico-moon" d="M20 13.6A8.4 8.4 0 0 1 10.4 4a8.4 8.4 0 1 0 9.6 9.6Z"
+                stroke="currentColor" stroke-width="1.7" fill="none" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="intro reveal">
+    <h1>账单概览</h1>
+    <p id="introSub">正在读取数据集…</p>
+  </section>
+
+  <section class="kpi-grid reveal" id="kpiGrid" aria-live="polite"></section>
+
+  <section class="grid cols-3-2 reveal">
+    <article class="card settlement-card" id="settlementCard">
+      <div class="card-head">
+        <h2>本月结算</h2>
+        <span class="badge" id="settlementBadge">—</span>
+      </div>
+      <div class="settle-hero">
+        <span class="settle-label">婷要给猪</span>
+        <span class="settle-value" id="settleValue">—</span>
+      </div>
+      <ul class="settle-rows" id="settleRows"></ul>
+      <p class="settle-note" id="settleNote"></p>
+    </article>
+
+    <article class="card" id="donutCard">
+      <div class="card-head"><h2>支出结构</h2></div>
+      <div class="donut-wrap">
+        <div class="donut-host" id="donutHost"></div>
+        <ul class="donut-legend" id="donutLegend"></ul>
+      </div>
+      <div class="donut-divider"><span>猪 / 婷 占比</span></div>
+      <div class="donut-wrap">
+        <div class="donut-host" id="donutHost2"></div>
+        <ul class="donut-legend" id="donutLegend2"></ul>
+      </div>
+    </article>
+  </section>
+
+  <section class="card reveal">
+    <div class="card-head">
+      <h2>月度支出趋势</h2>
+      <div class="segmented segmented-sm" id="trendSeg" role="tablist" aria-label="趋势口径">
+        <span class="segmented-pill" id="trendPill" aria-hidden="true"></span>
+      </div>
+    </div>
+    <div class="chart-host" id="trendHost"></div>
+    <ul class="legend" id="trendLegend"></ul>
+  </section>
+
+  <section class="grid cols-2 reveal">
+    <article class="card">
+      <div class="card-head"><h2>猪 / 婷 分摊</h2></div>
+      <div class="split-host" id="splitHost"></div>
+    </article>
+    <article class="card">
+      <div class="card-head"><h2>年度对比</h2></div>
+      <div class="year-host" id="yearHost"></div>
+    </article>
+  </section>
+
+  <section class="card reveal">
+    <div class="card-head">
+      <h2>消费项目排行</h2>
+      <span class="card-hint" id="rankHint">按累计金额</span>
+    </div>
+    <ol class="rank-list" id="rankList"></ol>
+  </section>
+
+  <section class="card reveal" id="detailCard">
+    <div class="card-head">
+      <h2>明细流水</h2>
+      <span class="card-hint" id="detailHint">—</span>
+    </div>
+    <div class="filters">
+      <label class="search">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.4" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <input id="detailSearch" type="search" placeholder="搜索项目名称…" autocomplete="off" />
+      </label>
+      <div class="chip-row" id="whoChips"></div>
+      <div class="chip-row" id="kindChips"></div>
+      <div class="chip-row" id="sortChips"></div>
+    </div>
+    <div class="table-scroll" id="tableScroll">
+      <table class="detail-table">
+        <thead>
+          <tr><th>年月</th><th>归属</th><th>性质</th><th>项目</th><th class="num">金额</th></tr>
+        </thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+    <div class="table-foot">
+      <button class="btn" id="loadMore" type="button">显示更多</button>
+    </div>
+  </section>
+
+  <section class="card reveal" id="checkCard">
+    <div class="card-head">
+      <h2>数据校验</h2>
+      <span class="card-hint" id="checkHint">—</span>
+    </div>
+    <ul class="check-list" id="checkList"></ul>
+  </section>
+
+  <footer class="foot">
+    <span id="footMeta">—</span>
+  </footer>
+</main>
+
+<div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true"></div>
+
+<script src="./data.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

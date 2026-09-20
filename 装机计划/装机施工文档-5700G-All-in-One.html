@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>装机施工文档 · 5700G All-in-One 主机</title>
+<style>
+  :root{
+    --ink:#16181d;--ink-2:#4a4f58;--ink-3:#7b818c;--line:#e3e5ea;--bg:#f6f7f9;--card:#ffffff;
+    --accent:#0A469C;--accent-soft:#eaf1fb;
+    --ok:#1D7A54;--ok-soft:#e8f4ee;
+    --warn:#9A5B00;--warn-soft:#fdf3e2;
+    --stop:#A32D2D;--stop-soft:#fbecec;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px;margin:0 auto;padding:48px 28px 80px;}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:32px 36px;margin-bottom:32px;}
+  .kicker{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:4px 12px;margin-bottom:16px;}
+  h1{font-size:26px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;}
+  .hero p{margin:0;color:var(--ink-2);font-size:14.5px;}
+  .meta{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:28px;font-size:13px;color:var(--ink-3);}
+  .meta b{display:block;color:var(--ink);font-weight:500;font-size:14px;margin-top:2px;}
+
+  h2{font-size:18px;font-weight:600;margin:48px 0 16px;padding-left:14px;border-left:3px solid var(--accent);letter-spacing:-.005em;}
+  h2 .n{color:var(--ink-3);font-weight:400;font-size:14px;margin-right:8px;}
+  h3{font-size:14.5px;font-weight:600;margin:24px 0 10px;}
+  p{margin:0 0 14px;}ul,ol{margin:0 0 14px;padding-left:22px;}li{margin-bottom:7px;}
+  code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:12.5px;background:#eef0f3;border-radius:4px;padding:1px 6px;color:#2c3138;}
+  pre{background:#1e2229;color:#d8dde5;border-radius:10px;padding:16px 18px;overflow-x:auto;font-size:12.5px;line-height:1.7;margin:0 0 14px;
+      font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;}
+  pre code{background:none;color:inherit;padding:0;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:18px;}
+  .verdict{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0;padding:18px 24px;margin:0 0 18px;}
+  .verdict strong{color:var(--accent);}
+  .alert{border-left:3px solid var(--stop);background:var(--stop-soft);border-radius:0 12px 12px 0;padding:16px 22px;margin:0 0 18px;}
+  .alert b{color:var(--stop);}
+  .tip{border-left:3px solid var(--ok);background:var(--ok-soft);border-radius:0 12px 12px 0;padding:16px 22px;margin:0 0 18px;}
+  .tip b{color:var(--ok);}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:0 0 8px;}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:#f2f4f7;font-weight:500;color:var(--ink-2);font-size:12.5px;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .tbl-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;margin-bottom:18px;}
+  .tbl-wrap table{margin:0;min-width:600px;}
+  tr.hl td{background:#f7fafd;}
+
+  .yes{color:var(--ok);font-weight:500;}.no{color:var(--stop);font-weight:500;}.mid{color:var(--warn);font-weight:500;}
+  .tag{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:999px;font-weight:500;white-space:nowrap;}
+  .tag.ok{background:var(--ok-soft);color:var(--ok);}
+  .tag.warn{background:var(--warn-soft);color:var(--warn);}
+  .tag.stop{background:var(--stop-soft);color:var(--stop);}
+  .tag.info{background:var(--accent-soft);color:var(--accent);}
+  .tag.gray{background:#f0f2f5;color:var(--ink-2);}
+
+  .note{font-size:13px;color:var(--ink-3);border-top:1px solid var(--line);margin-top:32px;padding-top:18px;}
+  .note b{color:var(--ink-2);font-weight:500;}
+  .footer{margin-top:48px;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);text-align:center;}
+  .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:13.5px;}
+  .toc a{color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:8px;background:var(--color-background-secondary,#f2f4f7);display:block;}
+  .toc a:hover{color:var(--accent);}
+  @media (max-width:640px){
+    .wrap{padding:28px 16px 56px;}.hero{padding:24px 20px;}.card{padding:18px 18px;}h1{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="kicker">施工文档 · 可照着做</span>
+    <h1>5700G All-in-One 主机装机流程</h1>
+    <p>从拆旧件到虚拟机上线的完整步骤。按阶段顺序执行，每个阶段末尾有验收点。</p>
+    <div class="meta">
+      <div>预计工时<b>半天（硬件 2h + 系统 2h）</b></div>
+      <div>需要动手<b>拆装 + 命令行</b></div>
+      <div>风险点<b>3 个（已标红）</b></div>
+      <div>最终形态<b>飞牛 OS + 2 台虚拟机 + Jellyfin</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">流程概览</h3>
+    <div class="toc">
+      <a href="#s0">阶段 0 · 开工前准备</a>
+      <a href="#s1">阶段 1 · 拆旧件</a>
+      <a href="#s2">阶段 2 · 装 CPU 与散热</a>
+      <a href="#s3">阶段 3 · 装内存与固态</a>
+      <a href="#s4">阶段 4 · 换机箱与走线</a>
+      <a href="#s5">阶段 5 · 点亮与 BIOS 设置</a>
+      <a href="#s6">阶段 6 · 安装飞牛 OS</a>
+      <a href="#s7">阶段 7 · 开启虚拟化</a>
+      <a href="#s8">阶段 8 · Docker 与 Jellyfin</a>
+      <a href="#s9">阶段 9 · 创建两台虚拟机</a>
+      <a href="#s10">验收清单</a>
+      <a href="#s11">故障速查</a>
+    </div>
+  </div>
+
+  <h2 id="s0"><span class="n">00</span>开工前准备</h2>
+
+  <h3>采购清单</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>型号</th><th>参考价</th><th>备注</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>CPU</b></td><td>AMD R7 5700G <b>散片</b>（闲鱼）</td><td class="num">¥850–1,000</td><td>必须带 G；<b>散片不带散热器</b>；验货要点见下方专项</td></tr>
+        <tr class="hl"><td><b>下压散热器</b></td><td>利民 AXP90-X47</td><td class="num">¥169</td><td>47mm &lt; C6 限高 75mm。<b>散片没有原装散热器，此项必买</b></td></tr>
+        <tr class="hl"><td><b>机箱</b></td><td>乔思伯 C6（15.9L）</td><td class="num">¥169–179</td><td>标准 M-ATX，ATX 电源限长 185mm</td></tr>
+        <tr><td>机箱风扇</td><td>已有</td><td class="num">¥0</td><td>顶部一个、底部一个</td></tr>
+        <tr><td>扎带</td><td>已有</td><td class="num">¥0</td><td>收纳非模组电源的余线</td></tr>
+        <tr><td>硅脂</td><td>AXP90 盒装自带</td><td class="num">¥0</td><td>无需另买</td></tr>
+        <tr style="background:#f7fafd;"><td colspan="2"><b>支出合计</b></td><td class="num"><b>¥1,188–1,348</b></td><td>对比卖件收入见文档末尾账目</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert">
+    <p style="margin:0 0 10px;"><b>⚠️ 买散片要知道的第一件事：没有原装散热器。</b>5700G 盒装附带幽灵散热器，散片不带 —— 所以 AXP90-X47 是<b>必买项</b>，不是可选项。</p>
+    <p style="margin:0;"><b>第二件事：市面上大量 5700G 来自联想、惠普等品牌机拆机。</b>这类机器很多是常年 7×24 运行过的，芯片长期高温工作，出问题的概率高于个人自用件。<b>同样价钱，优先选「个人升级换下」的，避开「批量拆机」的。</b></p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">5700G 散片 · 价格锚点</h3>
+    <div class="tbl-wrap" style="margin-bottom:14px;">
+      <table style="min-width:auto;">
+        <thead><tr><th>口径</th><th>价格区间</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td><b>散片合理价</b></td><td class="num"><b>¥850 – 1,000</b></td><td>正规散片 / OEM 拆机，成色较好的行情</td></tr>
+          <tr><td>二手个人件</td><td class="num">¥700 – 950</td><td>闲鱼个人出手，浮动大</td></tr>
+          <tr><td>盒装（对比）</td><td class="num">¥1,279 – 1,450</td><td>京东实测锚点 + 其他渠道</td></tr>
+          <tr><td class="no">异常低价</td><td class="num">＜ ¥700</td><td>需警惕：可能是问题件、打磨件或来路不明</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>收货后必做的四步验证（24 小时内完成，留退货窗口）</h3>
+    <ol>
+      <li><b>先看针脚。</b>AM4 是 PGA，<b>针脚在 CPU 上</b>。对着光看是否整齐、有无弯曲倒伏。<b>这一步必须在装任何东西之前做</b> —— 一旦压杆压下再发现弯针，责任就说不清了。</li>
+      <li><b>看顶盖。</b>字迹应清晰锐利、深浅一致。若有打磨痕迹、字迹发虚或与边缘不平行，可能是重印件。</li>
+      <li><b>装机点亮，进 BIOS 核对：</b>型号显示「AMD Ryzen 7 5700G」、8 核 16 线程、L3 缓存 16MB。</li>
+      <li><b>重点验证核显。</b>你整套转码方案都依赖 Vega 8，这一步不能省 —— 用 GPU-Z 或 HWiNFO 确认核显为 <b>Radeon Vega 8</b>、8 个 CU。<b>CPU 能亮但核显有问题，对你这台机器等于废件。</b></li>
+    </ol>
+
+    <h3>再加两个确认动作</h3>
+    <ul style="margin-bottom:0;">
+      <li><b>跑一次性能基准。</b>CPU-Z 参考：单核约 600–640、多核约 5,800–6,200（Cinebench R23 多核参考约 13,900）。<b>明显偏低说明是问题件或降频件。</b></li>
+      <li><b>压力测试 15–30 分钟</b>，看温度曲线是否正常、会不会突然降频。这同时验证了散热安装和芯片健康度。</li>
+    </ul>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>交易保障建议：</b>优先走闲鱼「验货宝」或约定当面验；收货<b>当天完成上述验证</b>；聊天记录里让对方明确承诺「核显正常、无弯针、非打磨件」，出问题时有据可依。<br><b>你只需要 1–2 路转码，5700G 的性能对你完全够用</b> —— 所以不必为「全新未拆」多付几百块，但也不要为省钱去买低于 ¥700 的问题件。</p>
+  </div>
+
+  <h3>要提前下载的文件（装机时没网会卡住）</h3>
+  <ul>
+    <li><b>飞牛 OS 安装镜像（ISO）</b> —— 从官网 <code>fnnas.com</code> 下载</li>
+    <li><b>技嘉 B450M AORUS ELITE 最新 BIOS</b> —— 从技嘉官网该型号支持页下载（大概率用不上，备用）</li>
+    <li><b>Rufus</b>（Windows 下制作启动盘）或 balenaEtcher</li>
+    <li>Windows 桌面虚拟机的系统镜像；Linux 桌面虚拟机的发行版 ISO</li>
+  </ul>
+
+  <h3>工具</h3>
+  <ul>
+    <li>十字螺丝刀（磁性头更好用，机箱螺丝容易掉）</li>
+    <li>无水酒精 + 无绒布（清理旧硅脂）</li>
+    <li>一个 8GB 以上 U 盘（会被格式化）</li>
+    <li>显示器 + 键鼠（首次点亮和 BIOS 设置需要，之后可撤掉）</li>
+    <li>防静电手环（可选，但拆装前先摸一下机箱金属部分）</li>
+  </ul>
+
+  <h2 id="s1"><span class="n">01</span>阶段 1 · 拆旧件</h2>
+
+  <div class="alert">
+    <p style="margin:0 0 10px;"><b>⚠️ 风险点 1：AM4 拆散热器可能把 CPU 一起拔出来。</b></p>
+    <p style="margin:0;">AM4 是 PGA 封装 —— <b>针脚在 CPU 上</b>，插槽里是孔。硅脂用久了会干结，散热器和 CPU 会黏在一起。如果你直接往上硬拔，很可能把 CPU 从插槽里拽出来，<b>而 AM4 的压杆是锁死状态，强行带出会弯针</b>。</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">正确的拆除顺序</h3>
+    <ol>
+      <li><b>先让硅脂软化。</b>装回原配置，开机跑 5 分钟（进 BIOS 待着或跑个轻负载），让 CPU 发热把硅脂焐软，再关机断电。</li>
+      <li><b>拔掉电源线，按几次开机键</b>放电。</li>
+      <li><b>拆 1660S 显卡。</b>拧下挡板螺丝，按下 PCIe 插槽末端的卡扣，垂直取出。妥善收好 —— 它要出掉。</li>
+      <li><b>拆散热器时先"扭"不要"拔"。</b>松开扣具后，用手握住散热器<b>轻轻左右旋转</b>，感觉到松动后再垂直取下。<b>绝不要直接往上拉。</b></li>
+      <li>如果发现 CPU 被带出来了：<b>立刻停手</b>，不要翻转、不要碰针脚。用指甲或塑料片从侧面把 CPU 从散热器底面平推下来，或者用牙线/细线从缝隙穿过拉锯式分离。</li>
+      <li>取下 5800X3D，<b>针脚朝上放在原装塑料托里</b>（或插回原盒的防静电海绵），单独收好 —— 它要出掉，成色直接影响价格。</li>
+      <li><b>清理硅脂。</b>用无绒布蘸无水酒精，把散热器底面和 CPU 表面的旧硅脂擦干净（散热器要留用的话，AXP90 用不上，但卖掉或备用也擦干净）。</li>
+    </ol>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>5800X3D 已取下、针脚完好无损；1660S 已取下、金手指无划伤；主板 AM4 插槽内没有硅脂残渣。</p>
+  </div>
+
+  <h2 id="s2"><span class="n">02</span>阶段 2 · 装 CPU 与散热</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">装 5700G</h3>
+    <ol>
+      <li>把 AM4 插槽的压杆完全抬起（垂直方向）。</li>
+      <li>核对对齐标记：<b>CPU 一角有个小三角，插槽一角也有个三角</b>，两个对齐。</li>
+      <li>垂直放下 CPU，<b>它会靠自身重量自然落到位</b>。<b>如果放不平，说明方向错了，拿起来重新对 —— 千万不要用力按。</b></li>
+      <li>压杆下压并卡入固定钩。这一步会有一点阻力，属于正常。</li>
+    </ol>
+
+    <h3>装利民 AXP90-X47</h3>
+    <ol>
+      <li><b>先拆除主板原装的塑料扣具模块</b>（AM4 主板 CPU 两侧那两块黑色塑料卡扣），保留主板背面的金属背板。</li>
+      <li>按利民说明书装扣具：AM4 用附带的扣具件 + 螺丝，直接拧在主板自带背板上。</li>
+      <li><b>涂硅脂：</b>5700G 是 65W，用量很少。在 CPU 中央挤黄豆粒大小一点即可，装散热器时压力会自然摊开。<b>不要涂满整片</b>，也不要涂抹太厚。</li>
+      <li>对准扣具放下散热器，<b>对角交替、分次拧紧</b>螺丝（每次拧两圈换对角），避免压偏。</li>
+      <li>插上 CPU 风扇插头到主板的 <code>CPU_FAN</code> 接口（务必插这个口，否则可能报风扇错误无法开机）。</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">参考：盒装幽灵散热器能用吗？—— <span class="yes">能用，但散片不带</span></h3>
+    <p style="color:var(--ink-2);font-size:13.5px;"><b>说明：</b>你已决定买散片，而<b>散片不带任何散热器</b>，所以这一段对你只是参考 —— 除非你手上恰好有闲置的幽灵散热器，那可以用它省下 ¥169。</p>
+    <p>5700G 盒装附带的是一颗 <b>AMD Wraith Stealth（幽灵）</b>。各来源交叉验证后的规格如下：</p>
+    <div class="tbl-wrap" style="margin-bottom:14px;">
+      <table style="min-width:auto;">
+        <thead><tr><th>项目</th><th>数值</th><th>对比 C6 的限制</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td><b>高度</b></td><td class="num"><b>约 54 mm</b>（含风扇一说 60mm）</td><td class="yes">C6 限高 75mm → 余量 15–21mm ✅</td></tr>
+          <tr class="hl"><td>散热额定</td><td class="num">65 W TDP</td><td class="yes">5700G 正是 65W，设计匹配 ✅</td></tr>
+          <tr><td>类型</td><td>下压式 · 纯铝挤压 · 无热管</td><td>风朝下吹，顺带照顾 VRM 与内存</td></tr>
+          <tr><td>风扇</td><td class="num">92mm · 1000–2700 RPM · 4-pin PWM</td><td>满载噪音约 30 dB(A)</td></tr>
+          <tr><td><b>安装方式</b></td><td>弹簧螺丝 + <b>主板原装背板</b></td><td class="yes">比 AXP90 更省事</td></tr>
+          <tr><td>硅脂</td><td>出厂预涂</td><td>开箱即用</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>结论：能用，能省 ¥169。</b>而且安装比 AXP90 更简单 —— 弹簧螺丝直接拧在主板原装背板上，<b>不需要拆主板那两块塑料扣具</b>。加上 C6 是四面网孔、机箱里只有 CPU 一个热源（65W），实际散热条件比典型机箱宽松得多。</p>
+    <p><b>但要知道它的三处妥协：</b></p>
+    <ul>
+      <li><b>噪音</b> —— 纯铝无热管、风扇可到 2700 RPM，满载约 30 dB(A)。对一台 7×24 放在家里的机器，持续转码时的噪音是真实存在的问题。</li>
+      <li><b>余量小</b> —— 它按 65W 设计，而 5700G 的 PPT 上限约 88W，长时间满载会贴着它的极限。</li>
+      <li><b>积尘后更吃力</b> —— 7×24 的机器散热器会积尘，本来余量小的话，几个月后风扇更容易跑满转速。</li>
+    </ul>
+    <p style="margin-bottom:0;"><b>建议：先用原装，实测后再决定要不要换。</b>装机时先用盒装幽灵（安装更简单，还预涂了硅脂），跑起来之后实地听噪音、看温度 —— 待机 40–50°C、转码不超过 80°C 且噪音能接受，就<b>直接省下 ¥169</b>；觉得吵或温度偏高，再换 AXP90-X47。此时硅脂是新涂的、没干结，<b>拆装很容易，不会有 AM4 黏住的风险</b>，而且 AXP90 自带的硅脂仍可用。<b>把决定放到有实测数据之后，比现在猜更靠谱。</b></p>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>散热器底面与 CPU 完全贴合无缝隙，螺丝已对角拧紧，风扇能自由转动不碰线。此阶段先不要把主板装进机箱 —— 后面还有内存和固态要装。</p>
+  </div>
+
+  <h2 id="s3"><span class="n">03</span>阶段 3 · 装内存与固态</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">内存</h3>
+    <p>你的内存是 32GB DDR4，先确认是两条 16GB 还是四条 8GB：</p>
+    <ul>
+      <li><b>如果是 2×16GB</b>：插在 <b>第 2 和第 4 个插槽</b>（从 CPU 侧数起，主板通常标为 A2 / B2），这样能稳定跑 DDR4-3200 双通道。</li>
+      <li><b>如果是 4×8GB</b>：AM4 平台插满四条时，内存控制器压力大，频率往往跑不到 3200（常见降到 2666–2933）。<b>建议只插两条</b>（同样选 A2 / B2），把频率拉回 3200 —— 对核显转码更有利。剩下的两条留着备用或出掉。</li>
+    </ul>
+    <p style="margin-bottom:0;">安装方法：掰开插槽两端的卡扣，对准防呆缺口，<b>双手拇指按住内存两端同时用力下压</b>，听到"咔"两声即到位。</p>
+
+    <h3>M.2 固态（系统盘）</h3>
+    <p>技嘉 B450M AORUS ELITE 有两个 M.2 插槽：一个支持 22110 规格、直连 CPU；另一个只支持 2280、走芯片组。<b>系统盘优先插直连 CPU 的那个</b>（通常在 CPU 下方，速度更快）。</p>
+    <ul style="margin-bottom:0;">
+      <li>拧下散热片螺丝（如果有），取出散热片</li>
+      <li>把 M.2 以约 30° 斜角插入插槽到底</li>
+      <li>用螺丝固定尾端，<b>再装回散热片</b></li>
+    </ul>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>内存两侧卡扣已完全扣合；M.2 尾端螺丝已固定、散热片已装回。</p>
+  </div>
+
+  <h2 id="s4"><span class="n">04</span>阶段 4 · 换机箱与走线</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">装机顺序（在这个大小里顺序很重要）</h3>
+    <ol>
+      <li><b>先把电源装进 C6。</b>电源位在顶部后方。C6 的电源限长 185mm，你的 GP600P 只有 140mm，空间充裕。电源风扇朝下（朝机箱内部）或朝上（朝顶板网孔）都可以，后者散热更好。</li>
+      <li><b>装主板。</b>装好铜柱（C6 出厂已预装对应 M-ATX 位置的铜柱，核对一下），把已装好 CPU/散热器/内存/固态的主板放进去，拧上螺丝。</li>
+      <li><b>装风扇。</b>顶部 1× 12cm（出风，风往外吹）、底部 1× 12cm（进风，风往内吹）。底部风扇注意别和主板或线材打架。</li>
+      <li><b>走线。</b>见下方专项说明。</li>
+      <li><b>接前面板线。</b>前面板开关/指示灯接主板 <code>F_PANEL</code>；前置 USB-A 接 <code>USB 3.1 Gen 1 header</code>（19-pin 插座）。</li>
+    </ol>
+  </div>
+
+  <h3>非模组电源的走线方案</h3>
+  <div class="card">
+    <p>你的 GP600P 是非模组，线材全部直出且偏长（24pin 550mm、CPU 8pin 600mm），同时带着 <b>5× SATA + 3× 大4pin + 2× PCIe 8pin</b> —— 这些<b>你全都用不到</b>（硬盘在独立柜、不插显卡），但拆不掉。</p>
+    <p><b>处理思路：把用不到的线束捆起来，塞进空着的显卡位。</b></p>
+    <ol>
+      <li>先把必须用的两根接好：<b>24-pin 主板供电</b>、<b>8-pin CPU 供电</b>（从主板左上角走，尽量贴着主板边缘绕过散热器）。</li>
+      <li>其余所有用不到的线（SATA、大4pin、PCIe），用魔术贴扎带<b>捆成一整束</b>，不要分成多小捆 —— 一整束比几小束好塞。</li>
+      <li>把这束线塞进机箱下部（原显卡位）的空隙，<b>尽量贴着机箱侧板</b>，不要横穿机箱中部。</li>
+      <li><b>关键：不要挡住 CPU 散热器上方的空间。</b>下压式散热器需要从上方吸风，线束压在上面会直接影响散热效率。</li>
+    </ol>
+    <p style="margin-bottom:0;">C6 是四面网孔设计，散热条件本来就宽松（机箱内只有 65W 的 CPU 一个热源），所以走线的主要目标是<b>整齐和不挡风</b>，不必追求极致。</p>
+  </div>
+
+  <div class="alert">
+    <p style="margin:0;"><b>已知项：前置 Type-C 接不了。</b>C6 的前置 Type-C 是 20-pin Type-E 接口，而技嘉 B450M AORUS ELITE 没有这个插座（Type-E 是 X570/B550 之后才普及的）。<b>把这条线单独捆好塞起来不接即可</b>，前置 USB-A 可以正常使用。不要为此专门买转接线 —— 主板前置接口只有 5Gbps，转接也达不到 C6 标称的 10Gbps。</p>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>所有线束已固定不松动；CPU 散热器上方无遮挡；机箱内没有散落的螺丝；侧板能顺利合上（合不上就重新理线，不要硬压）。</p>
+  </div>
+
+  <h2 id="s5"><span class="n">05</span>阶段 5 · 点亮与 BIOS 设置</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">首次点亮</h3>
+    <p>接好显示器（插主板的核显 HDMI 或 DVI 口）、键鼠、电源线。开机后<b>立刻连续按 Del 键</b>进入 BIOS。</p>
+    <p style="margin-bottom:0;">如果显示器无信号：先确认视频线插在<b>主板的核显接口</b>上（不是显卡位），然后检查内存是否插到底、CPU 8-pin 供电是否接好。</p>
+  </div>
+
+  <h3>BIOS 必设项（逐项照做）</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>设置项</th><th>设为</th><th>为什么</th><th>必要性</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>SVM Mode</b>（AMD 虚拟化）</td><td class="yes">Enabled</td><td>跑虚拟机的前提，不开虚拟机功能无法启动</td><td><span class="tag stop">必须</span></td></tr>
+        <tr><td>XMP / DOCP</td><td>Profile 1</td><td>让内存跑到标称的 DDR4-3200，核显共享带宽更高</td><td><span class="tag ok">建议</span></td></tr>
+        <tr><td>IOMMU</td><td>Enabled</td><td>只有做 PCI 硬件直通时才需要；你目前不直通，可先不开</td><td><span class="tag gray">可选</span></td></tr>
+        <tr><td>Above 4G Decoding</td><td>Enabled</td><td>做大容量设备直通时需要</td><td><span class="tag gray">可选</span></td></tr>
+        <tr><td>初始显示输出</td><td>IGD Video / Onboard</td><td>强制用核显输出，避免无独显时无信号</td><td><span class="tag ok">建议</span></td></tr>
+        <tr><td>UMA Frame Buffer Size</td><td>2 GB 或 4 GB</td><td>划给核显的显存，转码够用即可；划太大浪费系统内存</td><td><span class="tag ok">建议</span></td></tr>
+        <tr><td>CSM Support</td><td>Disabled</td><td>走纯 UEFI 引导，飞牛 OS 需要</td><td><span class="tag ok">建议</span></td></tr>
+        <tr><td>风扇曲线</td><td>Silent / 静音</td><td>7×24 运行，静音比极致散热重要</td><td><span class="tag gray">可选</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12.5px;color:var(--ink-3);">技嘉 B450 的 BIOS 里，<b>SVM Mode</b> 通常在 <code>M.I.T. → Advanced CPU Settings</code> 或 <code>Chipset</code> 菜单下；<b>显示输出与 UMA</b> 在 <code>Settings → IO Ports</code> 或 <code>Peripherals</code> 下。不同 BIOS 版本菜单名可能略有差异，以实际界面为准。</p>
+
+  <p>设置完成后按 <b>F10</b> 保存并重启，再次进入 BIOS 确认设置已生效。</p>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>BIOS 主界面能正确识别「AMD Ryzen 7 5700G」；SVM Mode 显示 Enabled；内存频率显示 3200MHz（或你插的条数对应的频率）。</p>
+  </div>
+
+  <h2 id="s6"><span class="n">06</span>阶段 6 · 安装飞牛 OS</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">制作启动盘</h3>
+    <ol>
+      <li>在另一台电脑上打开 Rufus，选择你的 U 盘</li>
+      <li>选择已下载的飞牛 OS ISO 文件</li>
+      <li>分区类型选 <b>GPT</b>，目标系统选 <b>UEFI</b>（与前面 BIOS 里关掉 CSM 对应）</li>
+      <li>开始写入，等待完成</li>
+    </ol>
+
+    <h3>安装系统</h3>
+    <ol>
+      <li>U 盘插到新主机，开机按 <b>F12</b>（技嘉的启动菜单键）选择从 U 盘启动</li>
+      <li>进入飞牛 OS 安装向导，<b>安装目标盘选择你的 M.2 固态</b> —— <b>这一步务必确认，别选错盘</b></li>
+      <li>按向导完成安装，重启后拔出 U 盘</li>
+      <li>主机接入网线，在浏览器访问安装时显示的 IP 地址，进入飞牛 OS 后台</li>
+    </ol>
+    <p style="margin-bottom:0;">飞牛 OS 基于 Debian 内核，支持 x86 硬件，可以灵活扩展外部存储。安装细节以官网文档为准。</p>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>能在浏览器打开飞牛 OS 后台并登录；系统信息里 CPU 显示为 8 核 16 线程；挂载的独立硬盘柜能被系统识别。</p>
+  </div>
+
+  <h2 id="s7"><span class="n">07</span>阶段 7 · 开启虚拟化能力</h2>
+
+  <div class="card">
+    <p>飞牛 OS 内置「虚拟机」应用，支持 Q35 主板类型、UEFI 固件、VNC 远程访问，也支持 PCI / USB 直通。你要跑两台桌面虚拟机，用 VNC 访问 —— 这些能力原生就有。</p>
+
+    <h3>先验证 CPU 虚拟化是否生效</h3>
+    <p>通过 SSH 登录飞牛 OS（用户名 <code>admin</code>，与后台同一个密码），然后：</p>
+    <pre><code>sudo -i
+# 输入密码后提示符变为 root
+dmesg | grep -e DMAR -e IOMMU</code></pre>
+    <p>如果输出里能看到 <code>AMD-Vi: IOMMU enabled</code> 之类的字样，说明底层已就绪。若什么都没输出，回 BIOS 确认 <b>SVM Mode</b> 已开启。</p>
+
+    <h3>关于硬件直通（你暂时用不到）</h3>
+    <p style="margin-bottom:0;">飞牛的虚拟机应用里有一个「硬件直通」开关（虚拟机应用 → 硬件 → 硬件直通 → 开启）。<b>但你的方案里不需要它</b> —— 你不插显卡、硬盘在独立柜，没有任何 PCI 设备要直通。<b>不要为了"开全功能"去折腾直通</b>，官方明确提示直通有稳定性风险（可能导致宿主或虚拟机崩溃），对一台 7×24 的 NAS 不划算。</p>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>SSH 能正常登录；能打开「虚拟机」应用界面。</p>
+  </div>
+
+  <h2 id="s8"><span class="n">08</span>阶段 8 · 部署 Docker 与 Jellyfin</h2>
+
+  <div class="card">
+    <h3 style="margin-top:0;">安装 Docker</h3>
+    <ol>
+      <li>飞牛 OS 后台 → 左侧 <b>「应用中心」</b></li>
+      <li>搜索 <b>Docker</b>，找到「Docker 容器引擎」，点击安装</li>
+      <li>等待 2–3 分钟，安装完成后在「已安装」页可以看到 Docker 图标</li>
+      <li>如果镜像拉取慢，在 Docker 设置里配置国内镜像加速源</li>
+    </ol>
+
+    <h3>建目录习惯（强烈建议）</h3>
+    <p style="margin-bottom:0;">先在存储里建一个专门的 Docker 文件夹（例如 <code>/vol1/1000/docker/</code>），每个应用一个子文件夹，把 compose 配置和持久化数据都放在里面。<b>好处是备份、升级、卸载都干净，不留残留。</b></p>
+
+    <h3>部署 Jellyfin</h3>
+    <p>推荐用 Docker Compose 部署（比一键安装更好管理）。核心是<b>把核显设备映射进容器</b>：</p>
+    <pre><code>version: '3.8'
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    network_mode: host
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - /你的影片目录:/media:ro
+    devices:
+      - /dev/dri:/dev/dri        # 核显直通给容器，硬件转码的关键
+    restart: unless-stopped</code></pre>
+
+    <h3>转码设置（这是你的核心需求）</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>设置项</th><th>值</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>硬件加速</td><td><b>VAAPI</b></td><td>AMD 核显的正确方式</td></tr>
+          <tr><td>VA-API 设备</td><td><code>/dev/dri/renderD128</code></td><td></td></tr>
+          <tr class="hl"><td><b>HEVC 10bit 解码</b></td><td class="yes">勾选</td><td><b>最关键的一项</b>，4K 片源全靠它</td></tr>
+          <tr class="hl"><td><b>输出编码器</b></td><td><b>HEVC 优先，同时启用 H.264</b></td><td>AMD 的 H.264 编码器质量最差，HEVC 明显更好且再省 30–50% 码率；两个都开让服务端按客户端自动选</td></tr>
+          <tr><td>远程连接最大码率</td><td>约 <b>800 kbps</b></td><td>外网自动转码、局域网保持直通，正好匹配你的用法</td></tr>
+          <tr><td>色调映射</td><td class="no"><b>关闭</b></td><td>你没有 HDR 片源，而它是 AMD 核显最吃力的环节</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-bottom:0;"><b>关于 360p 的降采样：</b>4K 到 360p 是横竖各 6 倍，硬件缩放单元单级处理会在细密纹理上产生摩尔纹。可在转码参数里开启抗锯齿标志；如果还是明显，改成两级缩放（你只 1–2 路，扛得住）。</p>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>用一部 1080p 和一部 4K 片源各播一次，播放界面能看到「转码」标志；在飞牛后台看 CPU 占用，4K 转 360p 时 CPU 不应持续跑满（跑满说明没走硬解）。<b>建议把实测的帧率和 CPU 占用记下来，这是唯一没法纸面确认的部分。</b></p>
+  </div>
+
+  <h2 id="s9"><span class="n">09</span>阶段 9 · 创建两台虚拟机</h2>
+
+  <div class="card">
+    <p>打开飞牛 OS 的「虚拟机」应用 → 新建。两台机器用同样的模板，参数不同：</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>参数</th><th>Windows 桌面</th><th>Linux 桌面</th></tr></thead>
+        <tbody>
+          <tr><td>vCPU</td><td class="num">4</td><td class="num">2</td></tr>
+          <tr><td>内存</td><td class="num">8 GB</td><td class="num">4 GB</td></tr>
+          <tr><td>磁盘</td><td class="num">≥ 64 GB</td><td class="num">≥ 32 GB</td></tr>
+          <tr class="hl"><td><b>主板类型</b></td><td><b>Q35</b></td><td><b>Q35</b></td></tr>
+          <tr class="hl"><td><b>固件</b></td><td><b>UEFI</b></td><td><b>UEFI</b></td></tr>
+          <tr><td>网卡</td><td>E1000</td><td>E1000</td></tr>
+          <tr><td>访问方式</td><td colspan="2">创建后点右侧「开机」，再用页面上的 <b>VNC 入口</b>访问桌面</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-bottom:0;">分配逻辑：宿主自己要留 2–4 个核心给 Jellyfin 转码和文件服务，所以两台虚拟机加起来不要超过 6 个 vCPU。内存方面宿主留 8GB、系统缓存 12GB 左右。</p>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>验收点：</b>两台虚拟机都能开机并通过 VNC 看到桌面；宿主的 CPU 和内存占用在可接受范围（内存不要持续接近 100%，那是换页的信号）。</p>
+  </div>
+
+  <h2 id="s10"><span class="n">10</span>总验收清单</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>合格标准</th></tr></thead>
+      <tbody>
+        <tr><td>CPU 识别</td><td>飞牛后台显示 8 核 16 线程 · Ryzen 7 5700G</td></tr>
+        <tr><td>内存</td><td>显示 32GB；若只插两条，频率应为 3200MHz</td></tr>
+        <tr><td>温度</td><td>待机 CPU 40–50°C；转码时不超过 80°C</td></tr>
+        <tr><td>整机功耗</td><td>待机 20–30W（用功率计实测，这是 NAS 的核心指标）</td></tr>
+        <tr><td>硬件转码</td><td>4K → 360p 实时，CPU 不持续满载</td></tr>
+        <tr><td>虚拟机</td><td>两台同时运行 + VNC 可访问 + Docker 服务正常</td></tr>
+        <tr><td>外网访问</td><td>在外面用手机能正常播放（自动转码生效）</td></tr>
+        <tr><td>前置接口</td><td>前置 USB-A 可用；Type-C 已知不可用</td></tr>
+        <tr><td>7×24 稳定性</td><td>连续运行 24 小时后，温度与功耗无异常爬升</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="s11"><span class="n">11</span>故障速查</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>现象</th><th>先查什么</th></tr></thead>
+      <tbody>
+        <tr><td>通电不亮、风扇不转</td><td>电源开关、24-pin 与 8-pin 是否插紧</td></tr>
+        <tr><td>风扇转但无显示</td><td>视频线是否插在主板的核显口（不是显卡位）；内存是否插到底；换一根视频线试</td></tr>
+        <tr><td>黑屏无反应，之前拆过散热器</td><td>CPU 是否被散热器带出导致针脚弯曲 —— 拆下 CPU 检查针脚</td></tr>
+        <tr><td>BIOS 认不到 5700G</td><td>BIOS 版本；理论上支持 5800X3D 的版本必然支持 5700G，若异常需刷最新 BIOS</td></tr>
+        <tr><td>内存频率只有 2133/2666</td><td>XMP 未开；或插满四条导致的降频</td></tr>
+        <tr><td>虚拟机功能报不支持</td><td>BIOS 里 SVM Mode 是否 Enabled</td></tr>
+        <tr><td>Jellyfin 转码时 CPU 跑满</td><td>容器没拿到 <code>/dev/dri</code>；或 HEVC 10bit 解码没勾选</td></tr>
+        <tr><td>转码画面有波纹状伪影</td><td>6 倍降采样的摩尔纹，开抗锯齿或改两级缩放</td></tr>
+        <tr><td>侧板合不上</td><td>线束太厚 —— 重新理线，不要硬压</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2><span class="n">12</span>旧件处置与账目</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>金额</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>买入 5700G 散片 + AXP90-X47 + 机箱</td><td class="num no">− ¥1,188 – 1,348</td><td>风扇与扎带已有，不计入</td></tr>
+        <tr><td>卖出 5800X3D</td><td class="num yes">+ ¥800 – 1,100</td><td>AM4 游戏天花板，已停产，需求坚挺</td></tr>
+        <tr><td>卖出 GTX 1660S</td><td class="num yes">+ ¥600 – 900</td><td>商家零售 ¥718–1,240，出给商家到手低 20–30%，挂闲鱼更高</td></tr>
+        <tr><td>N100 整机（可选）</td><td class="num yes">+ 待估</td><td>低功耗平台二手需求稳定，也可留作备用机</td></tr>
+        <tr class="hl"><td><b>净额（不含 N100）</b></td><td class="num yes"><b>约 +¥52 – +812</b></td><td>整个升级净赚，等于白得一台更强的主机</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><b>数据口径。</b>硬件规格（主板 244×244mm、C6 15.9L / 散热限高 75mm / 电源限长 185mm、AXP90-X47 高 47mm、GP600P 150×86×140mm）均来自厂商官网或产品规格库；飞牛 OS 的虚拟机与 Docker 能力来自其官方帮助中心与社区实测；价格为 2026-09-20 实时比价结果。<b>5700G 散片价格来源于国内行情报道（散片约 ¥850–1,000、二手个人件 ¥700–950）与国际二手成交中位数（约 $121），口径为市场观察值而非报价，实际成交以你谈定的为准。</b></p>
+    <p style="margin-bottom:0;"><b>关于转码性能：</b>「1–2 路 4K → 360p 可行」是基于硬件解码器能力的估算，<b>务必用真实 4K HEVC 片源实测一次</b>。装机过程中遇到的 BIOS 菜单名称差异，以你实际看到的界面为准。</p>
+  </div>
+
+  <div class="footer">
+    施工文档由灵策智算整理 · 全程注意防静电，拆装断电后进行
+  </div>
+
+</div>
+</body>
+</html>

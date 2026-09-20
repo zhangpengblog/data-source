@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最终方案 · 5700G 接替 N100 的 7×24 All-in-One 主机</title>
+<style>
+  :root{
+    --ink:#16181d;--ink-2:#4a4f58;--ink-3:#7b818c;--line:#e3e5ea;--bg:#f6f7f9;--card:#ffffff;
+    --accent:#0A469C;--accent-soft:#eaf1fb;
+    --ok:#1D7A54;--ok-soft:#e8f4ee;
+    --warn:#9A5B00;--warn-soft:#fdf3e2;
+    --stop:#A32D2D;--stop-soft:#fbecec;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:940px;margin:0 auto;padding:48px 28px 72px;}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:32px 36px;margin-bottom:36px;}
+  .kicker{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:4px 12px;margin-bottom:16px;}
+  h1{font-size:26px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;}
+  .hero p{margin:0;color:var(--ink-2);font-size:14.5px;}
+  .meta{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:28px;font-size:13px;color:var(--ink-3);}
+  .meta b{display:block;color:var(--ink);font-weight:500;font-size:14px;margin-top:2px;}
+
+  h2{font-size:17px;font-weight:600;margin:44px 0 14px;padding-left:12px;border-left:3px solid var(--accent);letter-spacing:-.005em;}
+  h2 .n{color:var(--ink-3);font-weight:400;font-size:14px;margin-right:8px;}
+  h3{font-size:14.5px;font-weight:600;margin:26px 0 10px;}
+  p{margin:0 0 14px;}ul{margin:0 0 14px;padding-left:20px;}li{margin-bottom:7px;}
+  code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:12.5px;background:#eef0f3;border-radius:4px;padding:1px 6px;color:#2c3138;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:18px;}
+  .verdict{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 12px 12px 0;padding:18px 24px;margin:0 0 18px;}
+  .verdict strong{color:var(--accent);}
+  .alert{border-left:3px solid var(--stop);background:var(--stop-soft);border-radius:0 12px 12px 0;padding:16px 22px;margin:0 0 18px;}
+  .alert b{color:var(--stop);}
+  .tip{border-left:3px solid var(--ok);background:var(--ok-soft);border-radius:0 12px 12px 0;padding:16px 22px;margin:0 0 18px;}
+  .tip b{color:var(--ok);}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:0 0 8px;}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:#f2f4f7;font-weight:500;color:var(--ink-2);font-size:12.5px;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .tbl-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;margin-bottom:18px;}
+  .tbl-wrap table{margin:0;min-width:620px;}
+  tr.hl td{background:#f7fafd;}
+
+  .yes{color:var(--ok);font-weight:500;}.no{color:var(--stop);font-weight:500;}.mid{color:var(--warn);font-weight:500;}
+  .tag{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:999px;font-weight:500;white-space:nowrap;}
+  .tag.ok{background:var(--ok-soft);color:var(--ok);}
+  .tag.warn{background:var(--warn-soft);color:var(--warn);}
+  .tag.stop{background:var(--stop-soft);color:var(--stop);}
+  .tag.info{background:var(--accent-soft);color:var(--accent);}
+  .tag.gray{background:#f0f2f5;color:var(--ink-2);}
+
+  .note{font-size:13px;color:var(--ink-3);border-top:1px solid var(--line);margin-top:32px;padding-top:18px;}
+  .note b{color:var(--ink-2);font-weight:500;}
+  .footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);text-align:center;}
+  @media (max-width:640px){
+    .wrap{padding:28px 16px 48px;}.hero{padding:24px 20px;}.card{padding:18px 18px;}h1{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="kicker">最终方案 · 7×24 All-in-One</span>
+    <h1>5700G 接替 N100：置换方案</h1>
+    <p>规划已明确：游戏主机升级后，把换下来的 B450 平台改造成 All-in-One，底层装飞牛 OS，<b>接替现在的 N100 NAS，7×24 永不关机</b>。</p>
+    <div class="meta">
+      <div>定位<b>7×24 NAS · All-in-One</b></div>
+      <div>承载<b>2 台桌面 VM + Docker + 瘦身转码</b></div>
+      <div>转码<b>外网观看时 4K/1080p → 360p</b></div>
+      <div>替代目标<b>现有 Intel N100 NAS</b></div>
+      <div>内存<b>32GB DDR4（已确认）</b></div>
+    </div>
+  </div>
+
+  <h2><span class="n">01</span>结论：卖掉换下来的两件，买 5700G</h2>
+
+  <div class="verdict">
+    <p style="margin:0 0 10px;">「7×24 永不关机」这个前提，让天平明确偏向了 5700G。**不是因为它性能更强，而是因为这是一台要连续跑几年的机器，功耗本身就是选型的第一指标。**</p>
+    <p style="margin:0;">而 5800X3D 做 NAS 是典型的<b>资源错配</b> —— 它是 AM4 平台游戏性能的天花板，96MB 3D V-Cache 在 NAS 场景里一点用不上，却要你全年为它的高待机功耗买单。</p>
+  </div>
+
+  <h2><span class="n">02</span>决定性数据：待机功耗差了一倍多</h2>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>平台</th><th>整机待机功耗</th><th>年耗电（7×24）</th><th>年电费</th></tr></thead>
+      <tbody>
+        <tr><td>Intel N100（现状）</td><td class="num">10 – 15 W</td><td class="num">88 – 131 度</td><td class="num">¥53 – 79</td></tr>
+        <tr class="hl"><td><b>R7 5700G（核显，无独显）</b></td><td class="num"><b>20 – 30 W</b></td><td class="num">175 – 263 度</td><td class="num"><b>¥105 – 158</b></td></tr>
+        <tr><td>R7 5800X3D + 1660S</td><td class="num">45 – 61 W</td><td class="num">394 – 534 度</td><td class="num">¥237 – 321</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12.5px;color:var(--ink-3);">功耗为整机实测典型区间（含主板、内存、硬盘），电费按 ¥0.6/度估算。实际受主板供电设计、BIOS 的 C-State / ASPM 设置、硬盘数量影响。</p>
+
+  <p><b>5700G 比 5800X3D + 1660S 每年省约 ¥130 – 165。</b>这个数字本身不惊人，但它是<b>每年重复发生</b>的，而且是一台要连续跑好几年的机器。更重要的是：从 N100 换过来，5700G 只让待机功耗翻一倍，5800X3D 方案则是翻四倍 —— 对一台 NAS 来说，后者已经偏离了「NAS」这个定位。</p>
+
+  <h2><span class="n">03</span>5800X3D 方案还有一处硬伤</h2>
+
+  <div class="alert">
+    <p style="margin:0 0 10px;"><b>5800X3D 没有核显，做无头 NAS 必须常驻一张显卡才能点亮。</b>这是一个绕不开的结构性问题，而两条出路都不理想：</p>
+    <ul style="margin:0 0 10px;">
+      <li><b>插 1660S</b> —— 转码能力确实强（NVENC 第 7 代、8 路会话），但常年多耗 7–15W，多一个机械与电子故障点（风扇、供电），机箱也得留出双槽空间。</li>
+      <li><b>插一张低功耗亮机卡</b> —— 功耗下来了，但市面上常见的亮机卡（如 GT 1030）<b>根本没有 NVENC 编码器</b>，转码只能回落到 CPU 软解 4K HEVC —— 那反而更耗电，4K 软解能吃掉好几个核心。</li>
+    </ul>
+    <p style="margin:0;">换句话说，<b>用 5800X3D 做 NAS，你不是在省一张显卡，而是在被迫选择「高功耗」或「失去硬解」。</b>而 5700G 的核显天生解决这个问题。</p>
+  </div>
+
+  <h2><span class="n">04</span>财务账：置换大概率还有结余</h2>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>参考金额</th><th>数据来源与口径</th></tr></thead>
+      <tbody>
+        <tr><td>卖出 5800X3D</td><td class="num yes">+ ¥800 – 1,100</td><td>国内二手市场实测行情（2026-08），AM4 天花板 + 已停产，需求坚挺</td></tr>
+        <tr><td>卖出 GTX 1660S</td><td class="num yes">+ ¥600 – 900</td><td>二手商家零售价淘宝 ¥718–888 / 京东 ¥1,087–1,240；<b>出给商家到手通常低 20–30%</b>，挂闲鱼可更高</td></tr>
+        <tr><td>买入 R7 5700G（盒装）</td><td class="num no">− ¥1,279</td><td>实时比价中可确认的盒装锚点；散片 / 二手更低</td></tr>
+        <tr class="hl"><td><b>净现金流</b></td><td class="num yes"><b>约 + ¥120 – 720</b></td><td>置换大概率不花钱，甚至有余</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tip">
+    <p style="margin:0;"><b>为什么 5800X3D 现在特别保值？</b>2026 年的市场背景下，AM4 主板与 DDR4 内存已经停产，同时 DDR5 价格大幅上涨 —— 大量 AM4 老用户选择「换颗 5800X3D 再战几年」而不是整套换到 AM5。这颗 U 是 AM4 的性能天花板，需求被推高了。**把一颗被游戏玩家抢着要的 CPU 拿去做 NAS，等于把它最值钱的那部分能力永久锁死在一个用不到的地方。**</p>
+  </div>
+
+  <h2><span class="n">05</span>两方案完整对照</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>维度</th><th>5700G（核显方案）</th><th>5800X3D + 1660S</th></tr></thead>
+      <tbody>
+        <tr><td>CPU</td><td>8C/16T · 16MB L3 · 65W</td><td>8C/16T · <b>96MB L3</b> · 105W</td></tr>
+        <tr><td>整机待机功耗</td><td class="yes">20 – 30 W</td><td class="no">45 – 61 W</td></tr>
+        <tr><td>转码引擎</td><td>Vega 8 · 2–3 路 1080p</td><td class="yes">NVENC 7 代 · 8 路会话</td></tr>
+        <tr><td>编码质量</td><td class="mid">较弱，建议输出改用 HEVC</td><td class="yes">优于 Vega 8</td></tr>
+        <tr><td>4K HEVC 10bit 硬解</td><td class="yes">支持</td><td class="yes">支持</td></tr>
+        <tr><td>是否需要独显</td><td class="yes">不需要</td><td class="no">必须常驻一张才能点亮</td></tr>
+        <tr><td>你的实际转码量</td><td class="yes">1–2 路 · 完全覆盖</td><td class="mid">8 路上限用不到，属于过剩</td></tr>
+        <tr><td>结构复杂度</td><td class="yes">无独显，故障点少，机箱可紧凑</td><td class="no">多一张卡 + 供电 + 空间</td></tr>
+        <tr><td>散热要求</td><td class="yes">65W，原装散热即可</td><td class="no">105W 且积热集中，需塔式</td></tr>
+        <tr><td>净支出</td><td class="yes">约 +¥120 – 720（有结余）</td><td class="yes">¥0 采购</td></tr>
+        <tr><td>综合</td><td><span class="tag ok">推荐</span></td><td><span class="tag gray">可行但错配</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><b>公平地说，5800X3D + 1660S 也不是没有优势：</b>不用买卖折腾、CPU 多核更强、转码上限高得多。但这三条对你都不成立 —— 你的转码量只有 1–2 路，多核对 2 台轻量桌面 VM + Docker 也是过剩，剩下的只有「省事」这一条。</p>
+
+  <h2><span class="n">06</span>最终配置单</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>部件</th><th>型号 / 状态</th><th>金额</th><th>要点</th></tr></thead>
+      <tbody>
+        <tr><td><b>CPU</b></td><td>AMD R7 5700G（盒装）</td><td class="num">−¥1,279</td><td>必须带 G，5700X / 5700 无核显</td></tr>
+        <tr><td><b>主板</b></td><td>B450（沿用）</td><td class="num">¥0</td><td><span class="tag ok">确认无需刷 BIOS</span></td></tr>
+        <tr><td><b>内存</b></td><td>已有 DDR4 <b>32GB</b></td><td class="num">¥0</td><td><span class="tag ok">已确认够用</span> 无需补充，见下节分配方案</td></tr>
+        <tr><td><b>显卡</b></td><td>1660S 卖出，不装机</td><td class="num">+¥600–900</td><td>核显已覆盖全部需求</td></tr>
+        <tr><td><b>散热</b></td><td>利民 AXP90-X47（下压式）</td><td class="num">−¥169</td><td>5700G 65W，余量充足</td></tr>
+        <tr><td><b>机箱</b></td><td>乔思伯 C6（15.9L）</td><td class="num">−¥169–179</td><td><span class="tag warn">先量主板尺寸</span> 详见另份机箱专项</td></tr>
+        <tr><td><b>机箱风扇</b></td><td>2× 12cm 低转速</td><td class="num">−¥40–80</td><td>底部进风 + 顶部出风</td></tr>
+        <tr><td><b>电源</b></td><td>沿用现有 ATX 450W</td><td class="num">¥0</td><td>整机峰值约 200W，够用</td></tr>
+        <tr class="hl"><td colspan="2"><b>合计</b></td><td class="num"><b>约 −¥260 – +¥340</b></td><td>含机箱散热后基本持平</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">虚拟机与内存分配</h3>
+    <div class="tbl-wrap" style="margin-bottom:14px;">
+      <table style="min-width:auto;">
+        <thead><tr><th>承载</th><th>vCPU</th><th>内存</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>Windows 桌面 VM</td><td class="num">4</td><td class="num">8 GB</td><td>纯工作，无媒体娱乐需求</td></tr>
+          <tr><td>Linux 桌面 VM</td><td class="num">2</td><td class="num">4 GB</td><td>桌面环境轻</td></tr>
+          <tr><td>宿主（飞牛 + 转码 + Docker）</td><td class="num">2–4</td><td class="num">8 GB</td><td>留余量给转码</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>你的 32GB 正好落在舒适区。</b>上面三项合计约 20GB，还剩 12GB 余量 —— 这部分不是浪费，而是留给你将来的文件系统缓存（飞牛如果跑 ZFS / Btrfs，ARC 会吃内存，有这笔余量表现会好很多）。<b>不需要再买内存</b>，在当前 DDR4 已停产、价格上行的背景下，这是个很理想的状态。</p>
+    <p style="margin-bottom:0;"><b>另外值得看一眼：</b>你的 32GB 是<b>两条 16GB</b> 还是<b>四条 8GB</b>？AM4 平台上插满四条内存时，频率往往跑不到标称的 3200（常见降到 2666–2933）；两条 16GB 则能稳定跑 3200。对核显转码和虚拟显卡渲染更有利。<b>影响不大，但下单前顺手确认一下</b> —— 如果是四条，可以考虑只插两条 16GB，把频率拉回来。</p>
+  </div>
+
+  <h2><span class="n">07</span>BIOS：已确认不需要升级</h2>
+  <div class="card">
+    <p>你的推断是对的。5700G 与 5800X3D 同属 5000 系、走同一套 AGESA，<b>但 5700G 的支持版本明显更早</b>：</p>
+    <div class="tbl-wrap" style="margin-bottom:14px;">
+      <table style="min-width:auto;">
+        <thead><tr><th>主板</th><th>5700G 支持点</th><th>5800X3D 支持点</th></tr></thead>
+        <tbody>
+          <tr><td>Gigabyte B450 AORUS ELITE V2</td><td>F62（AGESA 1.2.0.3B）</td><td>F64a（AGESA 1.2.0.6B）← 更晚</td></tr>
+          <tr><td>ASRock Fatal1ty B450 GAMING K4</td><td>v4.50（同一版本）</td><td>v4.50（同一版本）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-bottom:0;"><b>能点亮 5800X3D 的 BIOS，必然已包含 5700G 的微码。</b>这条推理是单向的，反过来不成立。保险起见可以开机进 BIOS 看版本号（或 <code>wmic bios get smbiosbiosversion</code>），再到主板官网 CPU 支持列表核对一次。</p>
+  </div>
+
+  <h2><span class="n">08</span>转码设置（沿用之前结论）</h2>
+  <div class="card">
+    <ul style="margin-bottom:0;">
+      <li><b>硬件加速选 VAAPI</b>，容器挂载 <code>/dev/dri</code>；务必勾上 <b>HEVC 10bit 解码</b>。</li>
+      <li><b>输出编码用 HEVC 而非 H.264</b> —— AMD 的 H.264 编码器是三大厂里最差的，而 HEVC 明显更好；同时 HEVC 比 H.264 再省 30–50% 码率（360p 一集 169 MB → 约 101 MB）。</li>
+      <li><b>两个编码器都启用</b>，让服务端按客户端能力自动选：手机端走 HEVC，浏览器（不支持 HEVC）自动回落 H.264。</li>
+      <li><b>「远程连接的最大码率」设约 800 kbps</b> —— 外网自动转码、局域网保持直通，正好匹配你的使用方式。</li>
+      <li><b>不要开色调映射</b> —— 你没有 HDR 片源，而它是 AMD 核显在转码里最吃力的环节。</li>
+      <li><b>注意 6 倍降采样的摩尔纹</b>：4K→360p 是横竖各 6 倍，硬件缩放单元单级处理会在细密纹理上产生波纹。可开抗锯齿标志，或改两级缩放。</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">09</span>收口前自查（清单已缩短）</h2>
+  <div class="card">
+    <ul style="margin-bottom:0;">
+      <li><b>内存容量 —— 已确认 32GB，够用</b>，这一项从待查清单里划掉了，也省掉了在 DDR4 涨价期补内存的支出。</li>
+      <li><b>散热器沿用即可</b>：原来配 5800X3D（105W、积热集中在 V-Cache 上）的散热器，规格高于 5700G（65W）所需，直接继续用，不用另买。</li>
+      <li><b>内存条数确认</b>：2×16GB 优于 4×8GB（四条时 AM4 常跑不到 3200）。顺手看一眼即可。</li>
+      <li><b>5800X3D 与 1660S 的实际出手价</b>：建议下单 5700G 前先挂出这两件，确认能收回多少。已确认的价格基准是 5700G 盒装 ¥1,279（两家独立店铺一致）。</li>
+      <li><b>N100 的去向</b>：迁移完成后，N100 整机可以出掉（低功耗平台在二手市场有稳定需求），也可以留作备用机 —— 这是置换计划里还没提到的一块残值。</li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <p><b>数据口径说明。</b>5700G 盒装 <b>¥1,279</b> 由两家独立店铺报价一致（京东，券后），另有旗舰店报价 ¥1,499，按低价区间采用。5800X3D 二手行情（¥800–1,100）来自国内二手市场实测报道（2026-08）。1660S 二手为商家零售价（淘宝 / 京东），<b>你出给商家的到手价通常低 20–30%</b>，挂闲鱼个人对个人可接近零售价。功耗为整机典型区间，电费按 ¥0.6/度估算。<b>价格与库存实时变动，最终以下单页面与你的实际成交价为准。</b></p>
+    <p style="margin-bottom:0;"><b>关于优惠券。</b>已查询当前可用的官方推广活动，全部为外卖红包、打车券、点餐折扣、电影票一类，<b>没有任何装机硬件相关优惠券</b>可领，因此不附领取链接。查不到就是查不到，不编造。</p>
+  </div>
+
+  <div class="footer">
+    本方案由灵策智算整理 · 建议先确认内存容量与实际二手成交价，再决定置换方案
+  </div>
+
+</div>
+</body>
+</html>
