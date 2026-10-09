@@ -431,10 +431,15 @@ html[data-theme="light"] .ico-moon { display: none; }
 }
 .kpi-sub { margin-top: 5px; font-size: 12.5px; color: var(--label-3); }
 
-/* ------------------------------------------------------------ 结算卡 */
+/* ------------------------------------------------------------ 结算卡
+   结算区 = 本月结算 + 上月结算 + 支出结构；两张结算卡等宽并排，宽度和较大 */
+.settle-grid { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.6fr) minmax(0, 1fr); }
 .settlement-card {
   background: linear-gradient(160deg, var(--material-strong), var(--material));
 }
+/* 上月结算是参照物，视觉权重压低一档：整卡降透明 + 数字改中性色 */
+#settlementCardPrev { opacity: .78; }
+#settlementCardPrev .settle-value { color: var(--label-2); font-weight: 660; }
 .badge {
   padding: 4px 11px;
   border-radius: var(--radius-pill);
@@ -760,9 +765,17 @@ html[data-theme="light"] .ico-moon { display: none; }
 .reveal.is-fallback { opacity: 1; transform: none; animation: none; }
 
 /* ------------------------------------------------------------ 响应式 */
+/* 结算区三列在 1000px 以下先收成「两结算卡并排 + 支出结构换行占满」，
+   再往下（860px）才完全单列，避免结算卡被压得过窄导致行内数字换行 */
 @media (max-width: 1000px) {
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cols-3-2, .cols-2 { grid-template-columns: minmax(0, 1fr); }
+  .settle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settle-grid #donutCard { grid-column: 1 / -1; }
+}
+@media (max-width: 860px) {
+  .settle-grid { grid-template-columns: minmax(0, 1fr); }
+  .settle-grid #donutCard { grid-column: auto; }
 }
 
 /* 中等屏：年度控件开始收窄，但仍能完整放下；允许换行避免溢出 */

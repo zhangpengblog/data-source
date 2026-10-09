@@ -68,7 +68,7 @@
 
   <section class="kpi-grid reveal" id="kpiGrid" aria-live="polite"></section>
 
-  <section class="grid cols-3-2 reveal">
+  <section class="grid settle-grid reveal">
     <article class="card settlement-card" id="settlementCard">
       <div class="card-head">
         <h2>本月结算</h2>
@@ -80,6 +80,19 @@
       </div>
       <ul class="settle-rows" id="settleRows"></ul>
       <p class="settle-note" id="settleNote"></p>
+    </article>
+
+    <article class="card settlement-card" id="settlementCardPrev">
+      <div class="card-head">
+        <h2>上月结算</h2>
+        <span class="badge" id="settlementBadgePrev">—</span>
+      </div>
+      <div class="settle-hero">
+        <span class="settle-label">婷要给猪</span>
+        <span class="settle-value" id="settleValuePrev">—</span>
+      </div>
+      <ul class="settle-rows" id="settleRowsPrev"></ul>
+      <p class="settle-note" id="settleNotePrev"></p>
     </article>
 
     <article class="card" id="donutCard">

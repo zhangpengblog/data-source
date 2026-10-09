@@ -124,6 +124,27 @@
     var s = currentScope();
     return s[s.length - 1];
   }
+  /* 结算卡的基准月：优先用「最新完整月」，若该年只有进行中的月份则退回当月。
+     latestComplete 由管线给出（如 2026-08），跨年时若无完整月则用该年最后一个月。 */
+  function settlementBaseMonth() {
+    var s = currentScope();
+    if (!s.length) return null;
+    var lc = DATA.meta.latestComplete;
+    if (lc) {
+      for (var i = s.length - 1; i >= 0; i--) {
+        if (s[i].ym === lc) return s[i];
+        if (s[i].ym < lc) break;
+      }
+    }
+    for (var j = s.length - 1; j >= 0; j--) if (!s[j].ongoing) return s[j];
+    return s[s.length - 1];
+  }
+  /* 基准月的前一个月（在同一年内往前找；已是最早则返回 null） */
+  function prevMonthOf(m) {
+    var s = currentScope();
+    var idx = s.indexOf(m);
+    return idx > 0 ? s[idx - 1] : null;
+  }
 
   /* ---------------------------------------------------------- 分段控件 */
   function buildSegmented(host, pill, items, active, onPick) {
@@ -237,11 +258,22 @@
     });
   }
 
-  /* ---------------------------------------------------------- 结算卡 */
-  function renderSettlement() {
-    var m = latestMonth();
-    $('settleValue').textContent = money(m.tingToZhu);
-    var badge = $('settlementBadge');
+  /* ---------------------------------------------------------- 结算卡
+     两张卡结构相同：本月结算 = 基准月（最新完整月），上月结算 = 其前一个月。
+     基准月若为进行中，会同时出现在「最新月支出」KPI 里，此处按最新完整月对齐，
+     避免两处口径不一致。 */
+  function renderSettleCard(ids, m, mPrev, emptyText) {
+    if (!m) {
+      $(ids.value).textContent = '—';
+      $(ids.badge).textContent = '—';
+      $(ids.badge).className = 'badge';
+      $(ids.rows).innerHTML = '';
+      $(ids.note).textContent = emptyText;
+      return;
+    }
+
+    $(ids.value).textContent = money(m.tingToZhu);
+    var badge = $(ids.badge);
     badge.textContent = m.ym + (m.ongoing ? ' · 进行中' : '');
     badge.className = 'badge' + (m.ongoing || m.diff ? ' is-warn' : '');
 
@@ -252,7 +284,7 @@
       ['猪总', m.zhuTotal], ['婷总', m.tingTotal],
       ['本月总支出', m.grandTotal]
     ];
-    var host = $('settleRows');
+    var host = $(ids.rows);
     host.innerHTML = '';
     rows.forEach(function (r) {
       var li = h('li');
@@ -265,15 +297,40 @@
       host.appendChild(li);
     });
 
-    var notes = [];
-    notes.push('结算方向：婷补给猪。本月共同开销 ' + money(m.publicTotal) + ' 元，一人一半各 ' + money(m.publicHalf) + ' 元。');
+    var notes = ['结算方向：婷补给猪。本月共同开销 ' + money(m.publicTotal) + ' 元，一人一半各 ' + money(m.publicHalf) + ' 元。'];
+    // 与上月的环比（只在两侧都有结算额时给出，避免刚开年时误导）
+    if (mPrev) {
+      var d = m.tingToZhu - mPrev.tingToZhu;
+      if (Math.abs(d) < 0.005) {
+        notes.push('与上月（' + ymLabel(mPrev.ym) + ' ' + money(mPrev.tingToZhu) + ' 元）持平。');
+      } else {
+        notes.push('较上月（' + ymLabel(mPrev.ym) + ' ' + money(mPrev.tingToZhu) + ' 元）' +
+          (d > 0 ? '多 ' : '少 ') + money(Math.abs(d)) + ' 元。');
+      }
+      var dc = m.grandTotal - mPrev.grandTotal;
+      notes.push('总支出环比' + (Math.abs(dc) < 0.005 ? '持平' :
+        (dc > 0 ? '增加 ' : '减少 ') + money(Math.abs(dc)) + ' 元') + '。');
+    }
     if (m.ongoing) notes.push('该月只有「猪」两列有数，视为进行中，尚未计入月均。');
     if (m.diff) {
       notes.push('源表手填的结算块与公式值存在差异：' + Object.keys(m.diff).map(function (k) {
         return k + ' ' + (m.diff[k] > 0 ? '+' : '') + money(m.diff[k]);
       }).join('、') + '（多为人工对冲项，未并入公式值）。');
     }
-    $('settleNote').textContent = notes.join(' ');
+    $(ids.note).textContent = notes.join(' ');
+  }
+
+  function renderSettlement() {
+    var base = settlementBaseMonth();
+    var prev = base ? prevMonthOf(base) : null;
+    renderSettleCard({
+      value: 'settleValue', badge: 'settlementBadge',
+      rows: 'settleRows', note: 'settleNote'
+    }, base, prev, '所选范围内没有可结算的月份。');
+    renderSettleCard({
+      value: 'settleValuePrev', badge: 'settlementBadgePrev',
+      rows: 'settleRowsPrev', note: 'settleNotePrev'
+    }, prev, null, '所选范围内没有更早的月份可比。');
   }
 
   /* ---------------------------------------------------------- 趋势图 */
