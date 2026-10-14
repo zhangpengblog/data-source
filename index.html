@@ -407,6 +407,8 @@ html[data-theme="dark"] .icon-btn .ico-moon { display: block; }
   .reveal:nth-child(3) { animation-delay: .12s; }
   .reveal:nth-child(4) { animation-delay: .17s; }
   .reveal:nth-child(5) { animation-delay: .22s; }
+  .reveal:nth-child(6) { animation-delay: .27s; }
+  .reveal:nth-child(7) { animation-delay: .32s; }
 }
 @keyframes reveal {
   from { opacity: 0; transform: translateY(14px) scale(.985); }
@@ -480,7 +482,7 @@ html[data-theme="dark"] .icon-btn .ico-moon { display: block; }
 
   <section class="hero reveal">
     <h1>站点导航</h1>
-    <p>四个入口：账单看板、投资看板、装机施工文档、装机最终方案。</p>
+    <p>六个入口：账单看板、投资看板、咸鱼之王攻略、FGO 礼装清单、装机施工文档、装机最终方案。</p>
   </section>
 
   <section class="grid">
@@ -527,6 +529,58 @@ html[data-theme="dark"] .icon-btn .ico-moon { display: block; }
       </div>
       <div class="card-foot">
         <span class="path">finance-dashboard-…workbuddy.host</span>
+        <span class="go">前往
+          <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+            <path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="card ext reveal" href="https://xianyu-king-guide.app.workbuddy.link/"
+       target="_blank" rel="noopener noreferrer" style="--accent: var(--orange)">
+      <div class="card-head">
+        <span class="card-mark" aria-hidden="true">鱼</span>
+        <div class="card-title">
+          <h2>咸鱼之王白嫖金鱼指南 <span class="badge live">线上</span></h2>
+          <span class="sub">游戏攻略 · 独立域名</span>
+        </div>
+      </div>
+      <p>中秋 / 元旦消耗档期的白嫖路线：档位门槛、拿鱼概率、入场资源与 7 天操作节奏，附资源缺口计算器。</p>
+      <div class="tags">
+        <span class="tag">档位门槛</span>
+        <span class="tag">拿鱼概率</span>
+        <span class="tag">资源计算器</span>
+      </div>
+      <div class="card-foot">
+        <span class="path">xianyu-king-guide…workbuddy.link</span>
+        <span class="go">前往
+          <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+            <path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="card ext reveal" href="https://f8d13b828d6845ad9714997e6ace99e1.app.workbuddy.link"
+       target="_blank" rel="noopener noreferrer" style="--accent: var(--purple)">
+      <div class="card-head">
+        <span class="card-mark" aria-hidden="true">绊</span>
+        <div class="card-title">
+          <h2>FGO 牵绊礼装清单 <span class="badge live">线上</span></h2>
+          <span class="sub">资料清单 · 独立域名</span>
+        </div>
+      </div>
+      <p>达芬奇工房 12 张限定对象牵绊礼装对应的从者名单，按职阶 / 属性 / 特性筛选，支持多张礼装求交集。</p>
+      <div class="tags">
+        <span class="tag">羁绊加成</span>
+        <span class="tag">职阶 / 属性</span>
+        <span class="tag">交集筛选</span>
+      </div>
+      <div class="card-foot">
+        <span class="path">f8d13b82…workbuddy.link</span>
         <span class="go">前往
           <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
             <path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.2"
@@ -590,9 +644,8 @@ html[data-theme="dark"] .icon-btn .ico-moon { display: block; }
   </section>
 
   <footer class="foot">
-    三个站点（<code>piggy-ledger</code>、<code>装机计划</code>、本页）完全自包含，无外部依赖，随根目录一起静态托管即可。<br>
-    <strong>投资理财看板不在本目录运行</strong> —— 它依赖 Python 服务端抓行情并生成 JSON，
-    因此保持独立域名，本页只做入口跳转。
+    本目录内的三个页面（<code>piggy-ledger</code>、<code>装机计划</code>、本页）完全自包含，无外部依赖，随根目录一起静态托管即可。<br>
+    <strong>另外三个站点不在本目录运行</strong> —— 各自独立域名，本页只做入口跳转。
   </footer>
 
 </main>
